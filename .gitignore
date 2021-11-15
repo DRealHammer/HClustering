@@ -1,3 +1,7 @@
 build
 data/*-data
+data/com-lj
+data/com-orkut
+data/snapGraphs
 .vscode
+scripts/friendster\ TODO
