@@ -1,13 +1,13 @@
 // custom functions and definitions
 #include <graphFeatures.h>
-
-
+#include <profiling.h>
+#include <inOut.h>
 
 
 static const std::vector<std::string> trainingGraphs = {
 	//"com-amazon",
 	"com-dblp",
-	//"com-lj",
+	"com-lj",
 	//"com-orkut"
 	"com-youtube"
 };
@@ -16,87 +16,27 @@ static const std::vector<std::string> testGraphs = {
 	"com-amazon"
 };
 
-void trainOnGraph(BoosterHandle booster, std::string graphFile, std::string communityFile) {
 
-	DMatrixHandle dtrain = createGraphCommunitiesDMatrix(graphFile, communityFile);
+void updateDataFiles() {
+	for (auto graphName : trainingGraphs) {
+		writeGraphFile(graphName);
+	}
 
-
-	// training
-	const char* name = "Training";
-	const char* eval_result = NULL;
-
-	for (int i = 0; i < 0; i++) {
-		XGBoosterUpdateOneIter(booster, i, dtrain);
-		if(XGBoosterEvalOneIter(booster, i, &dtrain, &name, 1, &eval_result)) {
-			std::cerr << "[" << i << "] Error!" << std::endl;
-		}
-
-		std::cout << eval_result << std::endl;
+	for (auto graphName : testGraphs) {
+		writeGraphFile(graphName);
 	}
 }
 
-void addAllTrainingFilesToSaves() {
-
-	for (int graphNr = 0; graphNr < trainingGraphs.size()/2; graphNr++) {
-
-		std::cout << "starting graph nr " << graphNr << " : " << trainingGraphs[graphNr*2] << std::endl;
-
-		std::cout << "reading the graph" << std::endl;
-		graph_io graphIO;
-		graph_access graph;
-		graphIO.readGraphWeighted(graph, trainingGraphs[graphNr * 2]);
-
-		std::cout << "reading the communities of: " << trainingGraphs[graphNr * 2 + 1] << std::endl;
-
-		auto comms = readCommunityFile(trainingGraphs[graphNr * 2 + 1]);
-
-		std::cout << "creating and writing the features and lables" << std::endl;
-		writeTrainingDataInFile(graph, comms, "data/saveFeatures.txt");
-
-		std::cout << "finished!! \n" << std::endl;
-
-	}
-
-	std::cout << "finished writing all files!!!" << std::endl;
-
-
-	
-
-}
-
-void writeGraphFile(std::string graphName) {
-
-	std::string graphFile = "data/" + graphName + "/" + graphName + ".metis";
-	std::string communityFile = "data/" + graphName + "/" + graphName + ".top5000.cmty.txt-nodes";
-	std::string dataFile = "data/" + graphName + "-data";
-
-
-	graph_io IO;
-	graph_access graph;
-	IO.readGraphWeighted(graph, graphFile);
-
-	std::cout << graphName << std::endl;
-
-	auto comms = readCommunityFile(communityFile);
-	writeTrainingDataInFile(graph, comms, dataFile);
-
-
-
-}
-
-
-int main() {
-
-
-	std::vector<DMatrixHandle> dtrains(trainingGraphs.size());
+int main(int argc, char** argv) {
 
 	// load training data
+	std::vector<DMatrixHandle> dtrains(trainingGraphs.size());
+
 	for (int i = 0; i < trainingGraphs.size(); i++) {
 		XGDMatrixCreateFromFile(std::string("data/" + trainingGraphs[i] + "-data").c_str(), 0, &dtrains[i]);
 	}
 
 	
-
 	// create / load the model
 	BoosterHandle booster;
 	XGBoosterCreate(dtrains.data(), dtrains.size(), &booster);
@@ -104,13 +44,12 @@ int main() {
 
 	XGBoosterSetParam(booster, "learning_rate", "0.2");
 
-
+	// training
 	std::cout << "starting training" << std::endl;
-	
 	
 	for (auto& dmat : dtrains) {
 
-		// training
+		
 		const char* name = "training";
 		const char* eval_result = NULL;
 
@@ -119,14 +58,19 @@ int main() {
 			if(XGBoosterEvalOneIter(booster, i, &dmat, &name, 1, &eval_result)) {
 				std::cerr << "[" << i << "] Error!" << std::endl;
 			}
-
-
+			
 			std::cout << eval_result << std::endl;
 		}
 	}
 
-	// testing
+	std::cout << "freeing matrices" << std::endl;
+	for (auto& dmat : dtrains) {
+		XGDMatrixFree(dmat);
+	}
 
+
+
+	// testing
 	const char* name = "com-amazon";
 	const char* eval_result = NULL;
 
@@ -136,11 +80,14 @@ int main() {
 
 	XGBoosterEvalOneIter(booster, 0, &dtest, &name, 1, &eval_result);
 	std::cout << eval_result << std::endl;
+
+	XGDMatrixFree(dtest);
+	std::cout << "freeing complete" << std::endl;
 	
 
 	std::cout << "saving model" << std::endl;
 	// write the model in the json
-	//XGBoosterSaveModel(booster, "booster.json");
+	XGBoosterSaveModel(booster, "booster.json");
 	std::cout << "saving complete!" << std::endl;
 /*
 
@@ -154,16 +101,6 @@ int main() {
 		std::cout << "[Edge " << i << "]" << out_result[i] << std::endl;
 	}
 */
-
-
-	std::cout << "freeing matrices" << std::endl;
-	for (auto& dmat : dtrains) {
-		XGDMatrixFree(dmat);
-	}
-
-	XGDMatrixFree(dtest);
-	std::cout << "freeing complete" << std::endl;
-
 	
 	return 0;
 }

@@ -1,0 +1,19 @@
+com-amazon
+-------------------- reading of Community file --------------------
+	Duration: 47 milliseconds
+
+-------------------- node degrees --------------------
+	Duration: 2 milliseconds
+
+-------------------- shared Neighbor Counts --------------------
+	Duration: 1604 milliseconds
+
+-------------------- local clustering coefficient --------------------
+	Duration: 2551 milliseconds
+
+-------------------- writing the file (should be rather fast) --------------------
+	Duration: 13999 milliseconds
+
+-------------------- writing the data in the file --------------------
+	Duration: 18181 milliseconds
+

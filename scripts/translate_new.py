@@ -1,7 +1,7 @@
 import sys
 from typing import OrderedDict
 
-
+# correct incorrect indices
 # comments are marked with hashtags(#)
 # edges are described like: <nodefrom> <nodeto>
 def correct_missing_indices(graph):
@@ -108,7 +108,6 @@ def ungraph_to_metis(graphName):
 			outFile.write(" ".join(neighborStrings) + "\n")
 
 	print("finished writing the metis file")
-
 
 
 
