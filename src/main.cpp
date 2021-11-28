@@ -159,6 +159,8 @@ int main(int argc, char** argv) {
 		std::string graphletFilename;
 		if(argc >= 5) {
 			communityFilename = argv[4];
+		}
+		if(argc == 6) {
 			graphFilename = argv[5];
 		}
 		writeGraphFeatureFile(graphFilename, outputFilename, communityFilename, graphletFilename);
