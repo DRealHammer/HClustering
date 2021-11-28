@@ -75,9 +75,72 @@ def correct_missing_indices(graph):
 	print(f"Fixed {wrongIndices} wrong Indices")
 
 
+def correct_missing_indices_only_ungraph(graph):
+
+	graphFilename = graph + ".ungraph.txt"
+
+	unique_ids:set[int] = set()
+	wrongIndices = 0
+
+	print("starting reading the file for the translation table")
+	# read the graph
+	with open(graphFilename, "r") as file:
+
+		for line in file:
+
+			# skip all comments
+			if line[0] == "#":
+				continue
+
+
+			fromNode, toNode = line.split("	")
+			fromNode = int(fromNode)
+			toNode = int(toNode)
+
+			unique_ids.add(fromNode)
+			unique_ids.add(toNode)
+
+	
+	nodeCount = len(unique_ids)
+
+	print("finished reading")
+
+	print("constructing the table")
+		
+	# there could be missin indices so we create a translation table to start from index 1
+	translation = dict()
+	ids = sorted(sorted(list(unique_ids)))
+	for index, nodeid in enumerate(ids):
+		translation[nodeid] = index + 1
+		if nodeid != index + 1:
+			wrongIndices += 1
+			
+
+	print("finished construction!")
+
+	print("writing the correct graph file")
+
+	with open(graphFilename, "r") as grFile, open(graphFilename + "-correct", "w") as outFile:
+		for line in grFile:
+
+			# skip all comments
+			if line[0] == "#":
+				continue
+
+
+			fromNode, toNode = line.split("	")
+			fromNode = int(fromNode)
+			toNode = int(toNode)
+
+			outFile.write(f"{translation[fromNode]} {translation[toNode]}\n")
+
+	print(f"Fixed {wrongIndices} wrong Indices")
+
+
 # assume every edge appearing only once (smallNode bigNode)
 # assume ids starting with 1
 # assume normal space as seperator
+# (all fulfilled after fix_indices function call)
 def ungraph_to_metis(graphName):
 	graphFilename = graphName + ".ungraph.txt-correct"
 
@@ -111,6 +174,4 @@ def ungraph_to_metis(graphName):
 
 
 
-#correct_missing_indices("com-friendster")
-
-ungraph_to_metis("com-friendster")
+correct_missing_indices_only_ungraph("data/com-youtube/com-youtube")

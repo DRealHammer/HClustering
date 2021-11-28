@@ -1,0 +1,78 @@
+#include <labelPropagation.h>
+
+// returns the new number of toDoNodes
+NodeID labelPropagateIteration(graph_access& graph, std::vector<NodeID>& toDoNodes, std::vector<PartitionID>& labels, const std::vector<float>& edgeProbs) {
+
+	std::vector<bool> nodeLabelChanged(graph.number_of_nodes(), false);
+
+	// for every node find the best neighbor
+	for (auto startNode : toDoNodes) {
+
+		std::map<PartitionID, float> labelValues;
+		forall_out_edges(graph, e, startNode)
+
+			auto targetNode = graph.getEdgeTarget(e);
+
+			// add probabilites
+			labelValues[labels[targetNode]] += edgeProbs[e];
+		endfor
+
+		// find best label
+		std::pair<PartitionID, float> maxPair = *(labelValues.begin());
+		for (auto pair : labelValues) {
+			if (pair.second > maxPair.second) {
+				maxPair = pair;
+			}
+		}
+
+		nodeLabelChanged[startNode] = labels[startNode] != maxPair.first || nodeLabelChanged[startNode];
+		labels[startNode] = maxPair.first;
+
+	}
+
+	bool converged = true;
+
+	// create new toDo for next iteration
+	toDoNodes = std::vector<NodeID>();
+	forall_nodes(graph, node)
+
+		if (nodeLabelChanged[node]) {
+			toDoNodes.push_back(node);
+			converged = false;
+		}
+
+	endfor
+
+
+	return toDoNodes.size();
+}
+
+std::vector<PartitionID> labelPropagate(graph_access& graph, const std::vector<float>& edgeProbs, int iterations, bool randomOrder) {
+
+	std::vector<NodeID> toDoNodes(graph.number_of_nodes());
+	std::iota(std::begin(toDoNodes), std::end(toDoNodes), 0);
+
+
+	// initialize the labels with the nodeIDs
+	std::vector<PartitionID> labels(toDoNodes);
+
+
+	for (int i = 0; i < iterations; i++) {
+
+		if (randomOrder) {
+			// TODO shuffle toDoNodes
+		}
+
+		if (!labelPropagateIteration(graph, toDoNodes, labels, edgeProbs)) {
+			std::cout << "Finished Label Propagation in Iteration " << i << std::endl; 
+			break;
+		}
+
+		std::cout << "changed " << toDoNodes.size() << " labels" << std::endl;
+	}
+
+	return labels;
+
+}
+
+

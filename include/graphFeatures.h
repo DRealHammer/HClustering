@@ -7,6 +7,9 @@
 #include <fstream>
 #include <map>
 
+// openmp
+#include <omp.h>
+
 // ml lib
 #include <xgboost/c_api.h>
 
@@ -20,7 +23,7 @@ typedef int CommID;
 
 #define EMPTY_VALUE -1.0f
 
-
+#define LABEL
 #define FEATURE_NODE_DEGREE_START 0
 #define FEATURE_NODE_DEGREE_TARGET 1
 #define FEATURE_NODE_COUNT 2
@@ -28,7 +31,8 @@ typedef int CommID;
 #define FEATURE_SHARED_NEIGHBOR_COUNT 4
 #define FEATURE_CLUSTERING_COEFFICIENT_LOCAL_START 5
 #define FEATURE_CLUSTERING_COEFFICIENT_LOCAL_TARGET 6
-#define FEATURE_CLUSTERING_COEFFICIENT_LOCAL_MEAN 7
+#define FEATURE_GRAPHLETS 7
+// reserve until 20
 
 
 

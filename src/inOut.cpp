@@ -1,5 +1,48 @@
 #include <inOut.h>
 
+
+void writeGraphFeatureFile(std::string graphFilename, std::string outputFilename, std::string communityFilename, std::string graphletFilename) {
+
+	graph_io IO;
+	graph_access graph;
+	IO.readGraphWeighted(graph, graphFilename);
+
+	
+
+	std::map<NodeID, std::vector<CommID>> comms;
+
+	if (communityFilename.size() != 0) {
+		comms = readCommunityFile(communityFilename);
+	}
+
+	// check if we have to create the graphlet file
+	if (graphletFilename.size() == 0) {
+		
+		std::cout << "no graphlet file given:\ncreating mtx file..." << std::endl;
+		std::string mtxGraphFilename = graphFilename + ".mtx";
+		graphToMTX(graph, mtxGraphFilename);
+
+		std::cout << "creating graphlet file..." << std::endl;
+		graphletFilename = graphFilename + ".graphlet";
+		createGraphletFile(mtxGraphFilename, graphletFilename);
+
+		// TODO correctly order the file (currently with translate_graphlet.sh) and delete first line
+		// use a bash command for sorting the file fast
+		std::string sortCommand = "cat " + graphletFilename + " | sort -n -k 2 | sort -n -s >> " + graphletFilename + "-s && mv " + graphletFilename + "-s " + graphletFilename;
+
+		system(sortCommand.c_str());
+	}
+
+	std::cout << "finished creating graphlet files" << std::endl;
+
+
+
+	writeFeaturesInFile(graph, outputFilename, comms, graphletFilename);
+
+}
+
+
+
 std::map<NodeID, std::vector<CommID>> readCommunityFile(std::string fileName) {
 
 	std::map<NodeID, std::vector<CommID>> comms;
@@ -33,8 +76,8 @@ std::map<NodeID, std::vector<CommID>> readCommunityFile(std::string fileName) {
 
 }
 
-// TODO add the communities and the label of the edge
-bool writeTrainingDataInFile(graph_access& graph, std::map<NodeID, std::vector<CommID>>& nodeCommunites, std::string fileName) {
+
+bool writeFeaturesInFile(graph_access& graph, std::string outputFilename, std::map<NodeID, std::vector<CommID>>& nodeCommunites, std::string graphletFilename) {
 
 	// create the data vectors if needed
 	std::vector<unsigned long> nodeDegrees(graph.number_of_nodes());
@@ -43,7 +86,6 @@ bool writeTrainingDataInFile(graph_access& graph, std::map<NodeID, std::vector<C
 		Timer t("node degrees");
 		#if defined(FEATURE_NODE_DEGREE_START) || defined(FEATURE_NODE_DEGREE_TARGET)
 
-			
 			forall_nodes(graph, n)
 				nodeDegrees[n] = graph.getNodeDegree(n);
 			endfor
@@ -63,7 +105,6 @@ bool writeTrainingDataInFile(graph_access& graph, std::map<NodeID, std::vector<C
 	std::vector<unsigned long> sharedNeighborCounts(graph.number_of_edges());
 	{
 		Timer t("shared Neighbor Counts");
-		// TODO improve performance
 		#ifdef FEATURE_SHARED_NEIGHBOR_COUNT
 			std::vector<std::vector<unsigned long>> neighbors(graph.number_of_nodes());
 
@@ -75,37 +116,25 @@ bool writeTrainingDataInFile(graph_access& graph, std::map<NodeID, std::vector<C
 				endfor
 			endfor
 
-			// create the shared neighbor amounts
-			std::vector<unsigned long> sharedNeighbors;
 
 
-			forall_nodes(graph, n)
-				forall_out_edges(graph, e, n)
-					NodeID targetNode = graph.getEdgeTarget(e);
+			{
+				#pragma omp parallel for
+				for(NodeID n = 0; n < graph.number_of_nodes(); ++n) {
+					forall_out_edges(graph, e, n)
+						NodeID targetNode = graph.getEdgeTarget(e);
+						
+						std::vector<unsigned long> sharedNeighbors;
 
-					// we already calculated the size of the shared neighbors of the edge targetNode -> n
-					// we only need to find the correct position
-					if (n > targetNode) {
 
-						forall_out_edges(graph, e_, targetNode)
-							if (graph.getEdgeTarget(e_) == n) {
-								sharedNeighborCounts[e] = sharedNeighborCounts[e_];
-								continue;
-							}
+						auto& startNeighbors = neighbors[n];
+						auto& targetNeighbors = neighbors[targetNode];
+						
+						std::set_intersection(startNeighbors.begin(), startNeighbors.end(), targetNeighbors.begin(), targetNeighbors.end(), std::back_inserter(sharedNeighbors));
+						sharedNeighborCounts[e] = sharedNeighbors.size();
 
-						endfor
-						continue;
-					}
-
-					sharedNeighbors.clear();
-					auto& startNeighbors = neighbors[n];
-					auto& targetNeighbors = neighbors[targetNode];
-					
-					std::set_intersection(startNeighbors.begin(), startNeighbors.end(), targetNeighbors.begin(), targetNeighbors.end(), std::back_inserter(sharedNeighbors));
-					sharedNeighborCounts[e] = sharedNeighbors.size();
-
+					endfor
 				endfor
-			endfor
 		#endif
 
 	}
@@ -116,21 +145,47 @@ bool writeTrainingDataInFile(graph_access& graph, std::map<NodeID, std::vector<C
 
 		#if defined(FEATURE_CLUSTERING_COEFFICIENT_LOCAL_START) || defined(FEATURE_CLUSTERING_COEFFICIENT_LOCAL_TARGET) | defined(FEATURE_CLUSTERING_COEFFICIENT_LOCAL_MEAN)
 			
-
-			forall_nodes(graph, node)
+			
+			{ 
+				#pragma omp parallel for
+				for(NodeID node = 0; node < graph.number_of_nodes(); ++node) {
 				localClusteringCoefficients[node] = clusteringCoefficient(graph, node);
 			endfor
 		#endif
 	}
 
-	#ifdef FEATURE_CLUSTERING_COEFFICIENT_LOCAL_MEAN
 
-		float localClusteringCoefficientMean = 0;
-		for (auto coeff : localClusteringCoefficients) {
-			localClusteringCoefficientMean += coeff;
+	// create the labels
+
+	#ifdef LABEL
+		std::vector<bool> labels(graph.number_of_edges());
+		bool hasLabels = nodeCommunites.size() != 0;
+		// we have given communities
+		if (hasLabels) {
+
+			// for all edges
+			{ 
+				#pragma omp parallel for
+				for(NodeID n = 0; n < graph.number_of_nodes(); ++n) {
+					forall_out_edges(graph, e, n)
+
+						NodeID edgeTarget = graph.getEdgeTarget(e);
+
+						// write the label first
+						labels[e] = shareCommunity(nodeCommunites[n], nodeCommunites[edgeTarget]);
+
+					endfor
+			endfor
+
 		}
-		localClusteringCoefficientMean /= localClusteringCoefficients.size();
 
+		
+
+
+	#endif
+
+	#ifdef FEATURE_GRAPHLETS
+		std::ifstream graphletFile(graphletFilename);
 
 	#endif
 
@@ -138,64 +193,114 @@ bool writeTrainingDataInFile(graph_access& graph, std::map<NodeID, std::vector<C
 	
 	{
 
-		Timer t("writing the file (should be rather fast)");
+		Timer t("writing the file");
 		// add the features in a file
-		std::ofstream featureFile(fileName, std::ios::out);
+		//std::ofstream featureFile(fileName, std::ios::out | std::ios::binary);
+		std::FILE* f = std::fopen(outputFilename.c_str(), "w");
 
 		#define XGFeature(nr, value) " " << nr << ":" << static_cast<float>(value)
+		#define featureWrite(file, nr, val) std::fprintf(file, " %d:%.3f", nr, static_cast<float>(val));
 
 		// for all edges
 		forall_nodes(graph, n)
 			forall_out_edges(graph, e, n)
 
+
 				NodeID edgeTarget = graph.getEdgeTarget(e);
 
-				// write the label first
-				if ( shareCommunity(nodeCommunites[n], nodeCommunites[edgeTarget]) ) {
-					featureFile << 1.0f;
-				} else {
-					featureFile << 0.0f;
+				// write only small - big edges
+				if (n > edgeTarget) {
+					continue;
 				}
+
+
+				#ifdef LABEL
+					//featureFile << labels[e] * 1.0f;
+					//auto label = std::to_string(labels[e]);
+					//featureFile.write(label.c_str(), label.size());
+					if (hasLabels) {
+						std::fprintf(f, "%d", static_cast<int>(labels[e]));
+					}
+					
+		
+				#endif
 
 				#ifdef FEATURE_NODE_DEGREE_START
 					// add both side degrees
-					featureFile << XGFeature(FEATURE_NODE_DEGREE_START, nodeDegrees[n]);
+					//featureFile << XGFeature(FEATURE_NODE_DEGREE_START, nodeDegrees[n]);
+					//auto featureNodeDegreeStart = XGFeatureString(FEATURE_NODE_DEGREE_START, nodeDegrees[n]);
+					//featureFile.write(featureNodeDegreeStart.c_str(), featureNodeDegreeStart.size());
+					featureWrite(f, FEATURE_NODE_DEGREE_START, nodeDegrees[n]);
 				#endif
 
 				#ifdef FEATURE_NODE_DEGREE_TARGET
 					// add both side degrees
-					featureFile << XGFeature(FEATURE_NODE_DEGREE_TARGET, nodeDegrees[edgeTarget]);
-
+					//featureFile << XGFeature(FEATURE_NODE_DEGREE_TARGET, nodeDegrees[edgeTarget]);
+					//auto featureNodeDegreeEnd = XGFeatureString(FEATURE_NODE_DEGREE_TARGET, nodeDegrees[edgeTarget]);
+					//featureFile.write(featureNodeDegreeEnd.c_str(), featureNodeDegreeEnd.size());
+					featureWrite(f, FEATURE_NODE_DEGREE_TARGET, nodeDegrees[edgeTarget]);
 				#endif
 
 				#ifdef FEATURE_NODE_COUNT
-					featureFile << XGFeature(FEATURE_NODE_COUNT, nodeCount);
-
+					//featureFile << XGFeature(FEATURE_NODE_COUNT, nodeCount);
+					//auto featureNodeCount = XGFeatureString(FEATURE_NODE_COUNT, nodeCount);
+					//featureFile.write(featureNodeCount.c_str(), featureNodeCount.size());
+					featureWrite(f, FEATURE_NODE_COUNT, nodeCount);
 				#endif
 
 				#ifdef FEATURE_EDGE_COUNT
-					featureFile << XGFeature(FEATURE_EDGE_COUNT, edgeCount);
-
+					//featureFile << XGFeature(FEATURE_EDGE_COUNT, edgeCount);
+					//auto featureEdgeCount = XGFeatureString(FEATURE_EDGE_COUNT, edgeCount);
+					//featureFile.write(featureEdgeCount.c_str(), featureEdgeCount.size());
+					featureWrite(f, FEATURE_EDGE_COUNT, edgeCount);
 				#endif
 
 				#ifdef FEATURE_SHARED_NEIGHBOR_COUNT
-					featureFile << XGFeature(FEATURE_SHARED_NEIGHBOR_COUNT, sharedNeighborCounts[e]);
+
+					//featureFile << XGFeature(FEATURE_SHARED_NEIGHBOR_COUNT, sharedNeighborCounts[e]);
+					//auto featureSharedNCount = XGFeatureString(FEATURE_SHARED_NEIGHBOR_COUNT, sharedNeighborCounts[edgeTarget]);
+					//featureFile.write(featureSharedNCount.c_str(), featureSharedNCount.size());
+					featureWrite(f, FEATURE_SHARED_NEIGHBOR_COUNT, sharedNeighborCounts[e]);
 				#endif
 
 				#ifdef FEATURE_CLUSTERING_COEFFICIENT_LOCAL_START
-					featureFile << XGFeature(FEATURE_CLUSTERING_COEFFICIENT_LOCAL_START, localClusteringCoefficients[n]);
+					//featureFile << XGFeature(FEATURE_CLUSTERING_COEFFICIENT_LOCAL_START, localClusteringCoefficients[n]);
+					//auto featureClustCoeffStart = XGFeatureString(FEATURE_CLUSTERING_COEFFICIENT_LOCAL_START, localClusteringCoefficients[n]);
+					//featureFile.write(featureClustCoeffStart.c_str(), featureClustCoeffStart.size());
+					featureWrite(f, FEATURE_CLUSTERING_COEFFICIENT_LOCAL_START, localClusteringCoefficients[n]);
 				#endif
 
 				#ifdef FEATURE_CLUSTERING_COEFFICIENT_LOCAL_TARGET
-					featureFile << XGFeature(FEATURE_CLUSTERING_COEFFICIENT_LOCAL_TARGET, localClusteringCoefficients[edgeTarget]);
+					//featureFile << XGFeature(FEATURE_CLUSTERING_COEFFICIENT_LOCAL_TARGET, localClusteringCoefficients[edgeTarget]);
+					//auto featureClustCoeffTarget = XGFeatureString(FEATURE_CLUSTERING_COEFFICIENT_LOCAL_TARGET, localClusteringCoefficients[edgeTarget]);
+					//featureFile.write(featureClustCoeffTarget.c_str(), featureClustCoeffTarget.size());
+					featureWrite(f, FEATURE_CLUSTERING_COEFFICIENT_LOCAL_TARGET, localClusteringCoefficients[edgeTarget]);
 				#endif
 
-				#ifdef FEATURE_CLUSTERING_COEFFICIENT_LOCAL_MEAN
-					featureFile << XGFeature(FEATURE_CLUSTERING_COEFFICIENT_LOCAL_MEAN, localClusteringCoefficientMean);
+				#ifdef FEATURE_GRAPHLETS
+					// read the current line of the graphlet file
+					std::size_t value;
+
+					// skip start node
+					graphletFile >> value;
+					// skip target node
+					graphletFile >> value;
+
+					// read and write the values
+
+					for (int i = 0; i < 8; i++) {
+						graphletFile >> value;
+						featureWrite(f, FEATURE_GRAPHLETS + i, value);
+					}
+
+
 				#endif
+
 
 				// at the end of the file add a new line for the next edge
-				featureFile << std::endl;
+				//featureFile << "\n";
+				//featureFile.write("\n", 1);
+				std::fprintf(f, "\n");
 
 			endfor
 		endfor
@@ -266,27 +371,54 @@ std::vector<float> getCommunityLabels(std::string filename, graph_access& graph)
 
 }
 
-void writeGraphFile(std::string graphName) {
+/*
 
-	std::string graphFile = "data/" + graphName + "/" + graphName + ".metis";
-	std::string communityFile = "data/" + graphName + "/" + graphName + ".top5000.cmty.txt-nodes";
-	std::string dataFile = "data/" + graphName + "-data";
+	procudes a file outputFile with an (currently unordered) listing for every edge (u, v) with u < v
+	of graphlets
 
+	triangle
+	2-star
+	4-clique
+	4-chordal-cycle
+	4-tailed-triangle
+	4-cycle
+	3-star
+	4-path
 
-	graph_io IO;
-	graph_access graph;
-	IO.readGraphWeighted(graph, graphFile);
+*/
+void createGraphletFile(std::string mtxGraphFilename, std::string outputFilename) {
 
-	std::cout << graphName << std::endl;
+	std::ifstream testFile(mtxGraphFilename);
 
-	std::map<NodeID, std::vector<CommID>> comms;
-	{
-		Timer t("reading of Community file");
-		comms = readCommunityFile(communityFile);
+	if(!testFile.is_open()) {
+		std::cout << "Error opening file " << mtxGraphFilename << std::endl; 
+		return;
 	}
 	
-	{
-		Timer t("writing the data in the file");
-		writeTrainingDataInFile(graph, comms, dataFile);
-	}
+	params p;
+
+	p.algorithm = "exact";
+	p.verbose = false;
+	p.graph_stats = false;
+	p.help = false;
+	p.graph = mtxGraphFilename;
+	p.macro_stats_filename = "";
+	p.micro_stats_filename = "";
+	p.workers = omp_get_max_threads();
+	p.block_size = 64;
+	p.ordering = "";
+	p.is_small_to_large = false;
+	p.ordering_csc_neighbor = "";
+	p.is_small_to_large_csc_neighbor = false;
+	p.graph_representation = "";
+	p.adj_limit = 10000;
+	p.density_cutoff = 0.80;
+
+
+	graphlet::graphlet_core G(p);
+	G.graphlet_decomposition_micro(p.workers);
+	std::string outFile = outputFilename;
+
+	// we want the ids of the nodes
+	G.write_micro_stats(outFile, true);
 }
