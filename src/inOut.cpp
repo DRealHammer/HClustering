@@ -199,7 +199,7 @@ bool writeFeaturesInFile(graph_access& graph, std::string outputFilename, std::m
 		std::FILE* f = std::fopen(outputFilename.c_str(), "w");
 
 		#define XGFeature(nr, value) " " << nr << ":" << static_cast<float>(value)
-		#define featureWrite(file, nr, val) std::fprintf(file, " %d:%.3f", nr, static_cast<float>(val));
+		#define featureWrite(file, nr, val) std::fprintf(file, " %d:%f", nr, static_cast<float>(val));
 
 		// for all edges
 		forall_nodes(graph, n)

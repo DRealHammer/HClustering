@@ -30,19 +30,30 @@ NodeID labelPropagateIteration(graph_access& graph, std::vector<NodeID>& toDoNod
 
 	}
 
-	bool converged = true;
 
 	// create new toDo for next iteration
 	toDoNodes = std::vector<NodeID>();
+
+	// first set every neighbor of a changed node to have changed too
 	forall_nodes(graph, node)
 
-		if (nodeLabelChanged[node]) {
-			toDoNodes.push_back(node);
-			converged = false;
+		if (nodeLabelChanged[node]){
+
+			forall_out_edges(graph, e, node)
+					nodeLabelChanged[graph.getEdgeTarget(e)] = true;
+			endfor
 		}
 
 	endfor
 
+	// add all nodes to the list
+	forall_nodes(graph, node) 
+
+		if (nodeLabelChanged[node]) {
+			toDoNodes.push_back(node);
+		}
+
+	endfor
 
 	return toDoNodes.size();
 }
@@ -60,7 +71,7 @@ std::vector<PartitionID> labelPropagate(graph_access& graph, const std::vector<f
 	for (int i = 0; i < iterations; i++) {
 
 		if (randomOrder) {
-			// TODO shuffle toDoNodes
+			std::random_shuffle(toDoNodes.begin(), toDoNodes.end());
 		}
 
 		if (!labelPropagateIteration(graph, toDoNodes, labels, edgeProbs)) {
@@ -70,6 +81,7 @@ std::vector<PartitionID> labelPropagate(graph_access& graph, const std::vector<f
 
 		std::cout << "changed " << toDoNodes.size() << " labels" << std::endl;
 	}
+
 
 	return labels;
 

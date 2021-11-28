@@ -3,6 +3,7 @@
 #include <KaHIP/graph_io.h>
 #include <map>
 #include <numeric>
+#include <algorithm>
 
 
 // receive an graph and the edge weights (maybe move the weights in the graph)

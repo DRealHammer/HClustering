@@ -75,7 +75,14 @@ void train(std::string dataFilename) {
 
 void performLabelPropagation(std::string graphFile, std::string dataFilename) {
 
+	std::cout << "graph file: " << graphFile << std::endl;
+	std::cout << "data file: " << dataFilename << std::endl;
 	std::string boosterFilename = "booster.json";
+
+	if (!std::ifstream(dataFilename).good()) {
+		std::cout << "Error: no data file found, extract your features first" << std::endl;
+		return;
+	}
 
 
 	DMatrixHandle dmat;
@@ -87,7 +94,8 @@ void performLabelPropagation(std::string graphFile, std::string dataFilename) {
 	XGBoosterCreate(&dmat, 1, &booster);
 	
 	// test if booster exists
-	if (std::ifstream(boosterFilename).is_open()) {
+	if (!std::ifstream(boosterFilename).is_open()) {
+		std::cout << "Error: no model found, train your booster first" << std::endl;
 		XGBoosterLoadModel(booster, boosterFilename.c_str());
 		return;
 	}
@@ -106,16 +114,43 @@ void performLabelPropagation(std::string graphFile, std::string dataFilename) {
 	}
 
 
+	std::cout << "finished prediction, starting to propagate through the graph" << std::endl;
 	graph_io graphIO;
 	graph_access graph;
-	graphIO.readGraphWeighted(graph, "data/testFiles/test.metis");
+	graphIO.readGraphWeighted(graph, graphFile);
 
+	std::cout << "starting label propagation" << std::endl;
+	auto res = labelPropagate(graph, probs, 200, false);
+
+	std::vector<PartitionID> labelCounts(graph.number_of_nodes());
 	
-	auto res = labelPropagate(graph, probs, 200);
-
-	for (auto r : res) {
-		//std::cout << r << std::endl;
+	// count the different clusters created
+	for (auto nodeLabel : res) {
+		labelCounts[nodeLabel] += 1;
 	}
+
+	int labelAmount = 0;
+	int maxClustersize = 0;
+	int minClustersize = std::numeric_limits<int>::max();
+	for(auto count : labelCounts) {
+		if (count > 0 ) {
+			labelAmount++;
+
+			if (count < minClustersize) {
+				minClustersize = count;
+			}
+
+			if (count > maxClustersize) {
+				maxClustersize = count;
+			}
+		}
+	}
+
+	std::cout << "Created " << labelAmount << " clusters" << std::endl;
+	std::cout << "Smallest cluster: " << minClustersize << std::endl;
+	std::cout << "Largest cluster: " << maxClustersize << std::endl;
+
+
 	
 
 }
@@ -144,6 +179,7 @@ int main(int argc, char** argv) {
 			std::cout << "too less parameters" << std::endl;
 			return 1;
 		}
+		std::cout << "performing label propagation:" << std::endl;
 		performLabelPropagation(argv[2], argv[3]);
 	}
 	else if (option == std::string("--createData")) {
@@ -161,9 +197,11 @@ int main(int argc, char** argv) {
 			communityFilename = argv[4];
 		}
 		if(argc == 6) {
-			graphFilename = argv[5];
+			graphletFilename = argv[5];
 		}
 		writeGraphFeatureFile(graphFilename, outputFilename, communityFilename, graphletFilename);
+	} else {
+		std::cout << "Command Error: " << option << " not found" << std::endl;
 	}
 
 	
