@@ -241,28 +241,20 @@ void writeFeaturesInFile(graph_access& graph, std::string outputFilename, std::m
 		{
 			std::ifstream graphletFile(graphletFilename);
 
-			forall_nodes(graph, startNode)
-				forall_out_edges(graph, e, startNode)
-					NodeID targetNode = graph.getEdgeTarget(e);
+			for (int i = 0; i < graph.number_of_edges()/2; i++) {
 
-					// only use small -> big edges
-					if (startNode > targetNode) {
-						continue;
-					}
+				std::string line;
+				std::getline(graphletFile, line);
+				std::stringstream stream(line);
 
-					std::string line;
-					std::getline(graphletFile, line);
-					std::stringstream stream(line);
+				float value;
+				for (int graphlet = 0; graphlet < 8; graphlet++) {
+					stream >> value;
+					edgeFeatures[i].push_back(value);
+				}
 
-					float value;
-					for (int i = 0; i < 8; i++) {
-						stream >> value;
-						edgeFeatures[i].push_back(value);
-					}
-
-					i++;
-				endfor
-			endfor
+			}
+		
 		}
 			break;
 		
@@ -272,7 +264,6 @@ void writeFeaturesInFile(graph_access& graph, std::string outputFilename, std::m
 
 	}
 	
-			
 	// create the labels
 
 	std::vector<float> labels(graph.number_of_edges()/2);

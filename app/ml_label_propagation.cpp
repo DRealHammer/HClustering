@@ -18,7 +18,7 @@
 
 /*
 
-./programm --train --data <graphName> [<graphNames>] [--test <graphName> ] [--booster <boosterName> ]
+
 ./programm --test --booster <boosterFilename> {<graphNames>}+
 ./programm --predict --data <graphName>
 
@@ -370,58 +370,18 @@ int main(int argc, char** argv) {
 	}
 
 
-	if (partition_config.train) {
-		if (partition_config.dataFilename.empty()) {
-			std::cout << "[Error] for training a datafile is required" << std::endl;
-			return 1;
-		}
-
-	}
-	else if (partition_config.labelPropagation) {
-		if (partition_config.graphFilename.empty() || partition_config.dataFilename.empty()) {
-			std::cout << "[Error] both a graph file and a data file are required" << std::endl;
-			return 1;
-		}
-
-		std::cout << "performing label propagation" << std::endl;
 
 
-			
-		if(partition_config.check) {
-			std::cout << "also checking the error to the real file" << std::endl;
-		}
-		if (partition_config.random) {
-			performRandomLabelPropagation(partition_config.graphFilename, partition_config.dataFilename, partition_config.check);
-		}
-		else {
-			performLabelPropagation(partition_config.graphFilename, partition_config.dataFilename, 0.2, partition_config.check);
-		}
-		
-	}
+	std::cout << "performing label propagation" << std::endl;
 
-	//--createData <graphFilename> <outputFilename> [<communityFilename>] [<graphletFilename>]
-	else if (partition_config.createData) {
-		if (partition_config.graphFilename.empty()) {
-			std::cout << "[Error] a graph Filename is required (for creating training data also a community file)" << std::endl;
-			return 1;
-		}
 
-		// find a outputfilename for the file if not specified
-		std::string outputFilename = partition_config.outFilename.empty() ? partition_config.graphFilename + "-data" : partition_config.outFilename;
-		
-		std::string communityFilename(partition_config.communityFilename);
-		std::string graphletFilename(partition_config.graphletFilename);
+	//if (partition_config.random) {
+	//	performRandomLabelPropagation(graph_filename, partition_config.dataFilename, partition_config.check);
+	//}
 
-		std::cout << "graph filename: " << partition_config.graphFilename << std::endl;
-		std::cout << "output filename: " << outputFilename << std::endl;
-		std::cout << "comm filename: " << communityFilename << std::endl;
-		std::cout << "graphlet filename: " << graphletFilename << std::endl;
-
-		writeGraphFeatureFile(partition_config.graphFilename, outputFilename, communityFilename, graphletFilename);
-	} else {
-		std::cout << "[Error]: no command was found!" << std::endl;
-	}
-
+	performLabelPropagation(graph_filename, partition_config.dataFilename, 0.1, false);
 	
+		
+
 	return 0;
 }

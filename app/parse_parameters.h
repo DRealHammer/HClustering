@@ -139,6 +139,11 @@ int parse_parameters(int argn, char **argv,
         struct arg_str *modelFilename                     = arg_strn(NULL, "model", "modelFilename", 0, 1, "The path to the model used for training");
 #endif
 
+#ifdef MODE_ML_LABEL_PROPAGATION
+        struct arg_str *modelFilename                     = arg_strn(NULL, "model", "modelFilename", 0, 1, "The path to the model used for predicting");
+        struct arg_str *dataFilename                      = arg_strn(NULL, "data", "dataFilename", 1, 1, "The path to the features used for predicting");
+#endif
+
 
 #ifdef MODE_MLCLUSTERING
         struct arg_lit *createData                           = arg_lit0(NULL, "createData", "Generate the features from a metis file");
@@ -290,6 +295,9 @@ int parse_parameters(int argn, char **argv,
                 featureFilename,
 #elif defined MODE_ML_TRAIN
                 modelFilename,
+#elif defined MODE_ML_LABEL_PROPAGATION
+                modelFilename,
+                dataFilename,
 #elif defined MODE_MLCLUSTERING
                 createData,
                 train,
@@ -436,6 +444,11 @@ int parse_parameters(int argn, char **argv,
 
 #ifdef MODE_ML_TRAIN
         partition_config.modelFilename = modelFilename->sval[0];
+#endif
+
+#ifdef MODE_ML_LABEL_PROPAGATION
+        partition_config.modelFilename = modelFilename->sval[0];
+        partition_config.dataFilename = dataFilename->sval[0];
 #endif
 
 #ifdef MODE_MLCLUSTERING
