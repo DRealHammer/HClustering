@@ -58,16 +58,23 @@ void evaluateBooster(BoosterHandle& booster, DMatrixHandle& dmat) {
 	std::cout << "Error: " << static_cast<float>(errorNoMatch + errorMatch)/(len_predict) << std::endl;
 }
 
-void train(std::string dataFilename) {
+void train(std::string dataFilename, std::string boosterFilename) {
 
-	std::string boosterFilename = "booster.json";
+	if (boosterFilename.size() == 0) {
+		boosterFilename = "booster.json";
+	}
+
 
 	std::cout << "reading file" << std::endl;
 	DMatrixHandle dtrain;
+	std::cout << "aaa" << std::endl;
+	std::cout << "data filename; " << dataFilename << std::endl;
 	if(XGDMatrixCreateFromFile(dataFilename.c_str(), 1, &dtrain)) {
 		std::cout << "could not read the data file" << std::endl;
 		return;
 	}
+
+	std::cout << "finished reading the file"  << std::endl;
 
 	BoosterHandle booster;
 	XGBoosterCreate(&dtrain, 1, &booster);
@@ -106,14 +113,14 @@ void train(std::string dataFilename) {
 
 
 	std::cout << "saving model" << std::endl;
-	XGBoosterSaveModel(booster, "booster.json");
+	XGBoosterSaveModel(booster, boosterFilename.c_str());
 
 }
 
 int main(int argc, char** argv) {
 
 	PartitionConfig partition_config;
-	std::string graph_filename;
+	std::string dataFilename;
 
 	bool is_graph_weighted = false;
 	bool suppress_output   = false;
@@ -121,7 +128,7 @@ int main(int argc, char** argv) {
 
 	int ret_code = parse_parameters(argc, argv, 
 					partition_config, 
-					graph_filename, 
+					dataFilename, 
 					is_graph_weighted, 
 					suppress_output, recursive); 
 
@@ -130,14 +137,9 @@ int main(int argc, char** argv) {
 	}
 
 
-	
-	if (partition_config.dataFilename.empty()) {
-		std::cout << "[Error] for training a datafile is required" << std::endl;
-		return 1;
-	}
-
-	train(partition_config.dataFilename);
+	train(dataFilename, partition_config.modelFilename);
 
 	
+
 	return 0;
 }
