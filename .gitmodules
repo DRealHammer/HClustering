@@ -1,3 +1,7 @@
 [submodule "xgboost"]
-	path = xgboost
+	path = extern/xgboost
 	url = https://github.com/dmlc/xgboost
+	
+[submodule "dmlc-core"]
+	path = extern/dmlc-core
+	url = https://github.com/dmlc/dmlc-core
