@@ -42,18 +42,18 @@ int main(int argc, char** argv) {
 	//--createData <graphFilename> <outputFilename> [<communityFilename>] [<graphletFilename>]
 
 	// find a outputfilename for the file if not specified
-	std::string outputFilename = partition_config.filename_output.empty() ? partition_config.graphFilename + "-data" : partition_config.filename_output;
+	std::string outputFilename = partition_config.filename_output.empty() ? graph_filename + "-data" : partition_config.filename_output;
 	
 	std::string communityFilename(partition_config.communityFilename);
 	std::string graphletFilename(partition_config.graphletFilename);
 	std::string featureFilename(partition_config.featureFilename);
 
-	std::cout << "graph filename: " << partition_config.graphFilename << std::endl;
+	std::cout << "graph filename: " << graph_filename << std::endl;
 	std::cout << "output filename: " << outputFilename << std::endl;
 	std::cout << "comm filename: " << communityFilename << std::endl;
 	std::cout << "graphlet filename: " << graphletFilename << std::endl;
 
-	writeGraphFeatureFile(partition_config.graphFilename, outputFilename, communityFilename, graphletFilename, featureFilename);
+	writeGraphFeatureFile(graph_filename, outputFilename, communityFilename, graphletFilename, featureFilename);
 
 	return 0;
 }

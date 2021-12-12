@@ -109,7 +109,7 @@ void writeFeaturesInFile(graph_access& graph, std::string outputFilename, std::m
 
 	// create the data vectors for all small big edges
 	std::vector<std::vector<float>> edgeFeatures(graph.number_of_edges() / 2);
-	std::vector<FEATURE> features(selectedFeatures.size());
+	std::vector<FEATURE> features;
 
 	for (FEATURE f : selectedFeatures) {
 		features.push_back(f);
@@ -322,8 +322,8 @@ void writeFeaturesInFile(graph_access& graph, std::string outputFilename, std::m
 			featureFile << labels[i];
 		}
 
-		for (auto value : edgeFeatures[i]) {
-			featureFile << " " << value;
+		for (int idx = 0; idx < edgeFeatures[i].size(); idx++) {
+			featureFile << " " << idx << ":" << edgeFeatures[i][idx];
 		}
 
 		featureFile << std::endl;

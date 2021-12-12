@@ -128,37 +128,15 @@ int parse_parameters(int argn, char **argv,
 #endif
 
 // ml practical
-/*
-
-need:
-
---createData <graphFilename> <outputFilename> [<communityFilename>] [<graphletFilename>]"
---train <dataFiles>
---labelPropagation <graphFilename> <dataFilename> [--check]"
-
-flags: done
-createData
-train
-labelPropagation
-check
-random (use random weights for label propagation)
-
-values: done
-graphFilename
-outFilename
-communityFilename
-graphletFilename
-
-dataFilename
-
-<graphFilename> [--output_filename <outputFilename>] [--communities <communityFilename>] [--graphlets <graphletFilename>] --featureFile <featureFile>
-
-*/
 #ifdef MODE_ML_CREATE_DATA
         struct arg_str *communityFilename                    = arg_strn(NULL, "communities", "communityFilename", 0, 1, "Path to graphs community file to work with.");
         struct arg_str *graphletFilename                     = arg_strn(NULL, "graphlets", "graphletFilename", 0, 1, "Path to graphs graphlet file to work with (if already existing).");
-        struct arg_str *featureFilename                          = arg_strn(NULL, "features", "featureFilename", 1, 1, "Path to the feature file to work with.");
+        struct arg_str *featureFilename                      = arg_strn(NULL, "features", "featureFilename", 1, 1, "Path to the feature file to work with.");
 
+#endif
+
+#ifdef MODE_ML_TRAIN
+        struct arg_str *modelFilename                     = arg_strn(NULL, "model", "modelFilename", 0, 1, "The path to the model used for training");
 #endif
 
 
@@ -310,6 +288,8 @@ dataFilename
                 communityFilename,
                 graphletFilename,
                 featureFilename,
+#elif defined MODE_ML_TRAIN
+                modelFilename,
 #elif defined MODE_MLCLUSTERING
                 createData,
                 train,
@@ -452,7 +432,10 @@ dataFilename
         partition_config.communityFilename = communityFilename->sval[0];
         partition_config.graphletFilename  = graphletFilename->sval[0];
         partition_config.featureFilename = featureFilename->sval[0];
+#endif
 
+#ifdef MODE_ML_TRAIN
+        partition_config.modelFilename = modelFilename->sval[0];
 #endif
 
 #ifdef MODE_MLCLUSTERING

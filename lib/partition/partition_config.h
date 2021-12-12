@@ -434,18 +434,17 @@ struct PartitionConfig
         //===============ML Clustering===========
         //=======================================
 
-        bool createData;
-        bool train;
         bool labelPropagation;
         bool check;
         bool random;
 
-        std::string graphFilename;
         std::string outFilename;
         std::string communityFilename;
         std::string graphletFilename;
         std::string dataFilename;
         std::string featureFilename;
+
+        std::string modelFilename;
 };
 
 
