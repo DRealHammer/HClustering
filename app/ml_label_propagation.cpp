@@ -370,18 +370,10 @@ int main(int argc, char** argv) {
 	}
 
 
-
-
 	std::cout << "performing label propagation" << std::endl;
 
 
-	//if (partition_config.random) {
-	//	performRandomLabelPropagation(graph_filename, partition_config.dataFilename, partition_config.check);
-	//}
-
-	performLabelPropagation(graph_filename, partition_config.dataFilename, 0.1, false);
-	
-		
+	performLabelPropagation(graph_filename, partition_config.dataFilename, 0.3, false);
 
 	return 0;
 }

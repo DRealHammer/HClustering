@@ -1,33 +1,22 @@
 #! /bin/bash
 
-program=./build/ml_clustering
 
-if [ -z ${1} ]; then
-echo "a graph name is required"
-exit 1
-fi
-
-graphFile=${1}
 
 
 # create the data
-#${program} --createData --graphFile data/${graphFile}/${graphFile}.metis --communityFilename data/${graphFile}/${graphFile}.top5000.cmty.txt-nodes --outFilename data/${graphFile}-data --graphletFile data/${graphFile}/${graphFile}.metis.graphlet
+#./build/ml_create_data data/com-amazon.metis --features features --communities data/com-amazon.top5000.cmty.txt-nodes
+
 
 # train with the created data
-#${program} --train --dataFile data/${graphFile}-data
+#./build/ml_train data/com-amazon.metis-data --model booster.json
 
 echo "-------------------------- Testing ----------------------------"
 
-if [ -z ${2} ]; then
-echo "no test graph specified"
-exit
-fi
 
-testGraph=${2}
 
 echo "-------------------------- Using the predicted weights ----------------------------"
 # perform testwise label propagation
-${program} --labelPropagation --graphFile data/${testGraph}/${testGraph}.metis --dataFile data/${testGraph}-data --check
+./build/ml_label_propagation data/com-amazon.metis --data data/com-amazon.metis-data
 
 
 #echo "-------------------------- Using random weights ----------------------------"

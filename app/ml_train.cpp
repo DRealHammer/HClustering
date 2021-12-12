@@ -67,8 +67,8 @@ void train(std::string dataFilename, std::string boosterFilename) {
 
 	std::cout << "reading file" << std::endl;
 	DMatrixHandle dtrain;
-	std::cout << "aaa" << std::endl;
-	std::cout << "data filename; " << dataFilename << std::endl;
+	
+	std::cout << "data filename: " << dataFilename << std::endl;
 	if(XGDMatrixCreateFromFile(dataFilename.c_str(), 1, &dtrain)) {
 		std::cout << "could not read the data file" << std::endl;
 		return;
