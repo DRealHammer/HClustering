@@ -72,8 +72,7 @@ std::vector<float> getEdgeProbs(std::string graphFile, std::string boosterFilena
 			if (startNode > targetNode) {
 				continue;
 			}
-			i++;
-
+			
 			probs[e] = out_result[i];
 
 			forall_out_edges(graph, inverse_e, targetNode)
@@ -82,6 +81,7 @@ std::vector<float> getEdgeProbs(std::string graphFile, std::string boosterFilena
 					break;
 				}
 			endfor
+			i++;
 		endfor
 	endfor
 
@@ -129,6 +129,8 @@ void performLabelPropagation(std::string graphFile, std::string dataFilename, fl
 	
 	std::cout << "starting label propagation" << std::endl;
 	auto res = labelPropagate(graph, probs, 200, true);
+
+	std::cout << "finished propagation" << std::endl;
 
 
 
@@ -187,9 +189,6 @@ void performLabelPropagation(std::string graphFile, std::string dataFilename, fl
 	std::cout << "Largest cluster: " << maxClustersize << std::endl;
 
 
-	if (!compare) {
-		return;
-	}
 
 	bst_ulong out_len = 0;
 	const float* out_result = nullptr;
@@ -309,10 +308,6 @@ void performRandomLabelPropagation(std::string graphFile, std::string dataFilena
 	std::cout << "Smallest cluster: " << minClustersize << std::endl;
 	std::cout << "Largest cluster: " << maxClustersize << std::endl;
 
-
-	if (!compare) {
-		return;
-	}
 
 	std::size_t errorMatch = 0;
 	std::size_t errorNoMatch = 0;

@@ -96,7 +96,7 @@ std::vector<PartitionID> labelPropagate(graph_access& graph, const std::vector<f
 	// initialize the labels with the nodeIDs
 	std::vector<PartitionID> labels(toDoNodes);
 	
-
+	std::cout << "starting iterations" << std::endl;
 
 	for (int i = 0; i < iterations; i++) {
 
