@@ -103,6 +103,8 @@ option(USE_TCMALLOC "if available, link against tcmalloc" OFF)
 option(USE_ILP "build local ILP improver - introduces dependency on Gurobi" OFF)
 
 
+add_definitions("-pg")
+
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/app)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/extern/argtable3-3.0.3)
@@ -194,7 +196,8 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/extern)
 #target_include_directories(libkaffpa_parallel PUBLIC ${MPI_CXX_INCLUDE_PATH})
 
 
-
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/extern/xgboost)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/extern/PGD)
 
 # ml practical library
 set(LIBMLCLUSTERING_SOURCE_FILES
@@ -295,18 +298,21 @@ add_library(libmlclustering OBJECT ${LIBMLCLUSTERING_SOURCE_FILES})
 #target_link_libraries(kaffpaE ${MPI_CXX_LIBRARIES} ${OpenMP_CXX_LIBRARIES})
 #install(TARGETS kaffpaE DESTINATION bin)
 
+
+
+SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -pg")
+SET(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} -pg")
+
 # ml practical executable
 add_executable(ml_create_data app/ml_create_data.cpp $<TARGET_OBJECTS:libmlclustering>)
 target_compile_definitions(ml_create_data PRIVATE "-DMODE_ML_CREATE_DATA")
 target_include_directories(ml_create_data PUBLIC ${MPI_CXX_INCLUDE_PATH})
 target_link_libraries(ml_create_data ${MPI_CXX_LIBRARIES} ${OpenMP_CXX_LIBRARIES})
-
 # xgboost library for ML
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/extern/xgboost)
+
 target_link_libraries(ml_create_data xgboost)
 
 # PGD for Graphlets
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/extern/PGD)
 target_link_libraries(ml_create_data PGD)
 
 install(TARGETS ml_create_data DESTINATION bin)

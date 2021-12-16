@@ -55,5 +55,6 @@ int main(int argc, char** argv) {
 
 	writeGraphFeatureFile(graph_filename, outputFilename, communityFilename, graphletFilename, featureFilename);
 
+	std::cout << "sucessfull" << std::endl;
 	return 0;
 }
