@@ -40,6 +40,7 @@ void writeGraphFeatureFile(std::string graphFilename, std::string outputFilename
 	std::ifstream featureFile(featureFilename);
 	if(!featureFile.is_open()) {
 		std::cout << "couldn't open feature file" << std::endl;
+		return;
 	}
 
 	std::set<FEATURE> selectedFeaturesSet;
@@ -65,7 +66,7 @@ void writeGraphFeatureFile(std::string graphFilename, std::string outputFilename
 		}
 	}
 
-	writeFeaturesInFile(graph, outputFilename, comms, graphletFilename, selectedFeaturesSet);
+	writeFeaturesInFile(graph, outputFilename, comms, selectedFeaturesSet, graphletFilename);
 
 }
 
@@ -104,8 +105,208 @@ std::map<NodeID, std::vector<CommID>> readCommunityFile(std::string fileName) {
 
 }
 
+struct FullEdge {
+	NodeID startNode;
+	NodeID targetNode;
+	EdgeID id;
+};
 
-void writeFeaturesInFile(graph_access& graph, std::string outputFilename, std::map<NodeID, std::vector<CommID>>& nodeCommunites, std::string graphletFilename, std::set<FEATURE> selectedFeatures) {
+
+void writeFeaturesInFile(graph_access& graph, std::string outputFilename, std::map<NodeID, std::vector<CommID>>& nodeCommunites, std::set<FEATURE>& selectedFeatures, std::string graphletFilename) {
+
+	// create vector of all relevant edges and their information once
+	// to iterate less in the data creating
+
+	std::vector<FullEdge> relevantEdges(graph.number_of_edges() / 2);
+
+	{
+		int i = 0;
+		forall_nodes(graph, startNode)
+			forall_out_edges(graph, e, startNode)
+
+				NodeID targetNode = graph.getEdgeTarget(e);
+
+				if (startNode > targetNode) {
+					continue;
+				}
+
+				relevantEdges[i].id = e;
+				relevantEdges[i].startNode = startNode;
+				relevantEdges[i].targetNode = targetNode;
+
+				i++;
+
+			endfor
+		endfor
+	}
+
+
+	// create the data vectors for all small big edges
+	std::vector<std::vector<float>> edgeFeatures(graph.number_of_edges() / 2);
+	std::vector<FEATURE> features;
+
+	for (FEATURE f : selectedFeatures) {
+		features.push_back(f);
+	}
+	std::sort(features.begin(), features.end());
+
+	std::ifstream graphletFile;
+	if (std::find(features.begin(), features.end(), GRAPHLETS) != features.end()) {
+		graphletFile.open(graphletFilename);
+	}
+
+
+	// index of the small->big edges
+
+	#pragma omp parallel for
+	for (int i = 0; i < relevantEdges.size(); i++) {
+		FullEdge& edge = relevantEdges[i];
+
+		for (FEATURE f : features) {
+			
+			switch (f){
+				case NODE_DEGREES:
+				{
+					
+					edgeFeatures[i].push_back(graph.getNodeDegree(edge.startNode));
+					edgeFeatures[i].push_back(graph.getNodeDegree(edge.targetNode));
+
+				}
+					break;
+
+				case NODE_COUNT:
+				{
+					edgeFeatures[i].push_back(graph.number_of_nodes());
+
+				}
+					break;
+
+				case EDGE_COUNT:
+				{
+					edgeFeatures[i].push_back(graph.number_of_edges());
+				}
+					break;
+
+				case SHARED_NEIGHBOR_COUNT:
+				{
+
+					std::vector<NodeID> startNeighbors;
+					forall_out_edges(graph, e, edge.startNode)
+						startNeighbors.push_back(graph.getEdgeTarget(e));
+					endfor
+
+					std::vector<NodeID> targetNeighbors;
+					forall_out_edges(graph, e, edge.targetNode)
+						targetNeighbors.push_back(graph.getEdgeTarget(e));
+					endfor
+
+					std::vector<NodeID> sharedNeighbors;
+					std::set_intersection(startNeighbors.begin(), startNeighbors.end(), targetNeighbors.begin(), targetNeighbors.end(), std::back_inserter(sharedNeighbors));
+					edgeFeatures[i].push_back(sharedNeighbors.size());
+
+				}
+					break;
+
+			case CLUSTERING_COEFFICIENTS_LOCAL:
+			{
+
+				edgeFeatures[i].push_back(clusteringCoefficient(graph, edge.startNode));
+				edgeFeatures[i].push_back(clusteringCoefficient(graph, edge.targetNode));
+
+			}
+				break;
+
+
+			case GRAPHLETS:
+			{
+
+				std::string line;
+				std::getline(graphletFile, line);
+				std::stringstream stream(line);
+
+				float value;
+				while (stream >> value) {
+					edgeFeatures[i].push_back(value);
+				}
+			
+			}
+				break;
+			
+			default:
+				break;
+			}
+		}
+
+	}
+
+	
+	// create the labels
+
+	std::vector<float> labels(graph.number_of_edges()/2);
+	bool hasLabels = nodeCommunites.size() != 0;
+	// we have given communities
+	if (hasLabels) {
+
+		// for all edges
+		for (int i = 0; i < relevantEdges.size(); i++) {
+			FullEdge& edge = relevantEdges[i];
+
+			// write the label first
+			labels[i] = shareCommunity(nodeCommunites[edge.startNode], nodeCommunites[edge.targetNode]);
+		}
+
+	}
+
+
+	// finish the data creation, now fill them into the final features vector
+	
+	// add the features in a file
+	std::ofstream featureFile(outputFilename);
+	//std::FILE* f = std::fopen(outputFilename.c_str(), "w");
+
+	//#define XGFeature(nr, value) " " << nr << ":" << static_cast<float>(value)
+	//#define featureWrite(file, nr, val) std::fprintf(file, " %d:%f", nr, static_cast<float>(val));
+
+	for (int i = 0; i < relevantEdges.size(); i++) {
+
+		if (hasLabels) {
+			featureFile << labels[i];
+		}
+
+		for (int idx = 0; idx < edgeFeatures[i].size(); idx++) {
+			featureFile << " " << idx << ":" << edgeFeatures[i][idx];
+		}
+
+		featureFile << std::endl;
+	}
+}
+
+/*
+void writeFeaturesInFile(graph_access& graph, std::string outputFilename, std::map<NodeID, std::vector<CommID>>& nodeCommunites, std::set<FEATURE>& selectedFeatures, std::string graphletFilename) {
+
+	// create translation table from edge index to
+	// small -> big edge index
+
+	std::vector<EdgeID> translationTable(graph.number_of_edges());
+	int i = 0;
+
+
+	forall_nodes(graph, startNode)
+		forall_out_edges(graph, e, startNode)
+
+			NodeID targetNode = graph.getEdgeTarget(e);
+
+			if (startNode > targetNode) {
+				continue;
+			}
+
+			translationTable[e] = i;
+
+			i++;
+
+		endfor
+	endfor
+	
 
 	// create the data vectors for all small big edges
 	std::vector<std::vector<float>> edgeFeatures(graph.number_of_edges() / 2);
@@ -119,7 +320,6 @@ void writeFeaturesInFile(graph_access& graph, std::string outputFilename, std::m
 	// index of the small->big edges
 
 	for (FEATURE f : features) {
-		int i = 0;
 
 		switch (f)
 		{
@@ -134,10 +334,9 @@ void writeFeaturesInFile(graph_access& graph, std::string outputFilename, std::m
 						continue;
 					}
 
-					edgeFeatures[i].push_back(graph.getNodeDegree(startNode));
-					edgeFeatures[i].push_back(graph.getNodeDegree(targetNode));
+					edgeFeatures[translationTable[e]].push_back(graph.getNodeDegree(startNode));
+					edgeFeatures[translationTable[e]].push_back(graph.getNodeDegree(targetNode));
 
-					i++;
 				endfor
 			endfor
 		}
@@ -155,9 +354,8 @@ void writeFeaturesInFile(graph_access& graph, std::string outputFilename, std::m
 						continue;
 					}
 
-					edgeFeatures[i].push_back(count);
+					edgeFeatures[translationTable[e]].push_back(count);
 
-					i++;
 				endfor
 			endfor
 		}
@@ -175,9 +373,8 @@ void writeFeaturesInFile(graph_access& graph, std::string outputFilename, std::m
 						continue;
 					}
 
-					edgeFeatures[i].push_back(count);
+					edgeFeatures[translationTable[e]].push_back(count);
 
-					i++;
 				endfor
 			endfor
 		}
@@ -185,7 +382,9 @@ void writeFeaturesInFile(graph_access& graph, std::string outputFilename, std::m
 
 		case SHARED_NEIGHBOR_COUNT:
 		{
-			forall_nodes(graph, startNode)
+			{ 
+				#pragma omp parallel for
+				for(NodeID startNode = 0; startNode < graph.number_of_nodes(); ++startNode) {
 
 				std::vector<NodeID> startNeighbors;
 				forall_out_edges(graph, e, startNode)
@@ -207,9 +406,8 @@ void writeFeaturesInFile(graph_access& graph, std::string outputFilename, std::m
 
 					std::vector<NodeID> sharedNeighbors;
 					std::set_intersection(startNeighbors.begin(), startNeighbors.end(), targetNeighbors.begin(), targetNeighbors.end(), std::back_inserter(sharedNeighbors));
-					edgeFeatures[i].push_back(sharedNeighbors.size());
+					edgeFeatures[translationTable[e]].push_back(sharedNeighbors.size());
 
-					i++;
 				endfor
 			endfor
 		}
@@ -217,7 +415,9 @@ void writeFeaturesInFile(graph_access& graph, std::string outputFilename, std::m
 
 		case CLUSTERING_COEFFICIENTS_LOCAL:
 		{
-			forall_nodes(graph, startNode)
+			{ 
+				#pragma omp parallel for
+				for(NodeID startNode = 0; startNode < graph.number_of_nodes(); ++startNode) {
 				forall_out_edges(graph, e, startNode)
 					NodeID targetNode = graph.getEdgeTarget(e);
 
@@ -226,11 +426,10 @@ void writeFeaturesInFile(graph_access& graph, std::string outputFilename, std::m
 						continue;
 					}
 
-					edgeFeatures[i].push_back(clusteringCoefficient(graph, startNode));
-					edgeFeatures[i].push_back(clusteringCoefficient(graph, targetNode));
+					edgeFeatures[translationTable[e]].push_back(clusteringCoefficient(graph, startNode));
+					edgeFeatures[translationTable[e]].push_back(clusteringCoefficient(graph, targetNode));
 
 
-					i++;
 				endfor
 			endfor
 		}
@@ -271,7 +470,6 @@ void writeFeaturesInFile(graph_access& graph, std::string outputFilename, std::m
 	// we have given communities
 	if (hasLabels) {
 
-		int i = 0;
 		// for all edges
 		forall_nodes(graph, startNode)
 			forall_out_edges(graph, e, startNode)
@@ -282,9 +480,8 @@ void writeFeaturesInFile(graph_access& graph, std::string outputFilename, std::m
 				}
 
 				// write the label first
-				labels[i] = shareCommunity(nodeCommunites[startNode], nodeCommunites[edgeTarget]);
+				labels[translationTable[e]] = shareCommunity(nodeCommunites[startNode], nodeCommunites[edgeTarget]);
 
-				i++;
 			endfor
 		endfor
 
@@ -300,7 +497,6 @@ void writeFeaturesInFile(graph_access& graph, std::string outputFilename, std::m
 	//#define XGFeature(nr, value) " " << nr << ":" << static_cast<float>(value)
 	//#define featureWrite(file, nr, val) std::fprintf(file, " %d:%f", nr, static_cast<float>(val));
 
-	int i = 0;
 	forall_nodes(graph, startNode)
 		forall_out_edges(graph, e, startNode)
 		NodeID edgeTarget = graph.getEdgeTarget(e);
@@ -310,15 +506,14 @@ void writeFeaturesInFile(graph_access& graph, std::string outputFilename, std::m
 		}
 
 		if (hasLabels) {
-			featureFile << labels[i];
+			featureFile << labels[translationTable[e]];
 		}
 
-		for (int idx = 0; idx < edgeFeatures[i].size(); idx++) {
-			featureFile << " " << idx << ":" << edgeFeatures[i][idx];
+		for (int idx = 0; idx < edgeFeatures[translationTable[e]].size(); idx++) {
+			featureFile << " " << idx << ":" << edgeFeatures[translationTable[e]][idx];
 		}
 
 		featureFile << std::endl;
-		i++;
 		endfor
 	endfor
 }
@@ -384,6 +579,7 @@ std::vector<float> getCommunityLabels(std::string filename, graph_access& graph)
 	return labels;
 
 }
+*/
 
 /*
 
@@ -400,6 +596,7 @@ std::vector<float> getCommunityLabels(std::string filename, graph_access& graph)
 	4-path
 
 */
+
 void createGraphletFile(std::string mtxGraphFilename, std::string outputFilename) {
 
 	std::ifstream testFile(mtxGraphFilename);

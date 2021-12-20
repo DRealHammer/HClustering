@@ -9,7 +9,7 @@
 
 
 std::map<NodeID, std::vector<CommID>> readCommunityFile(std::string fileName);
-void writeFeaturesInFile(graph_access& graph, std::string outputFilename, std::map<NodeID, std::vector<CommID>>& nodeCommunites, std::string graphletFilename = std::string(), std::set<FEATURE> selectedFeatures = std::set<FEATURE>());
+void writeFeaturesInFile(graph_access& graph, std::string outputFilename, std::map<NodeID, std::vector<CommID>>& nodeCommunites, std::set<FEATURE>& selectedFeatures, std::string graphletFilename = std::string());
 void writeGraphFeatureFile(std::string graphFilename, std::string outputFilename, std::string communityFilename = std::string(), std::string graphletFilename = std::string(), std::string featureFilename = std::string());
 std::vector<float> getCommunityLabels(std::string filename, graph_access& graph);
 

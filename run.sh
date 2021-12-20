@@ -4,8 +4,9 @@
 
 
 # create the data
-./build/ml_create_data data/com-amazon.metis --features features --communities data/com-amazon.top5000.cmty.txt-nodes
-
+#./build/ml_create_data data/com-amazon.metis --features features --communities data/com-amazon.top5000.cmty.txt-nodes --graphlets data/com-amazon.metis.graphlet
+./build/ml_create_data data/com-dblp.metis --features features --communities data/com-dblp.top5000.cmty.txt-nodes
+./build/ml_create_data data/com-youtube.metis --features features --communities data/com-youtube.top5000.cmty.txt-nodes
 
 # train with the created data
 #./build/ml_train data/com-amazon.metis-data --model booster.json

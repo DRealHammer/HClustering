@@ -103,7 +103,8 @@ option(USE_TCMALLOC "if available, link against tcmalloc" OFF)
 option(USE_ILP "build local ILP improver - introduces dependency on Gurobi" OFF)
 
 
-add_definitions("-pg")
+#add_definitions("-pg")
+#add_definitions("-g")
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/app)
