@@ -301,8 +301,8 @@ add_library(libmlclustering OBJECT ${LIBMLCLUSTERING_SOURCE_FILES})
 
 
 
-SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -pg")
-SET(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} -pg")
+#SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -pg")
+#SET(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} -pg")
 
 # ml practical executable
 add_executable(ml_create_data app/ml_create_data.cpp $<TARGET_OBJECTS:libmlclustering>)

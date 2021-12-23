@@ -141,6 +141,7 @@ void writeFeaturesInFile(graph_access& graph, std::string outputFilename, std::m
 	}
 
 
+
 	// create the data vectors for all small big edges
 	std::vector<std::vector<float>> edgeFeatures(graph.number_of_edges() / 2);
 	std::vector<FEATURE> features;
@@ -155,10 +156,22 @@ void writeFeaturesInFile(graph_access& graph, std::string outputFilename, std::m
 		graphletFile.open(graphletFilename);
 	}
 
+	std::vector<float> clusterCoefficents(graph.number_of_nodes());
+
+	#pragma omp parallel for
+	for (NodeID n = 0; n < graph.number_of_nodes(); n++) {
+		clusterCoefficents[n] = clusteringCoefficient(graph, n);
+	}
+
 
 	// index of the small->big edges
 
-	#pragma omp parallel for
+	// bool array for every thread
+	//std::vector<std::vector<bool>> isNeighbor(omp_get_max_threads(), std::vector<bool>(graph.number_of_nodes()));
+
+	std::vector<bool> isNeighbor(graph.number_of_nodes(), false);
+
+	//#pragma omp parallel for
 	for (int i = 0; i < relevantEdges.size(); i++) {
 		FullEdge& edge = relevantEdges[i];
 
@@ -189,51 +202,51 @@ void writeFeaturesInFile(graph_access& graph, std::string outputFilename, std::m
 
 				case SHARED_NEIGHBOR_COUNT:
 				{
-
-					std::vector<NodeID> startNeighbors;
+					int count = 0;
 					forall_out_edges(graph, e, edge.startNode)
-						startNeighbors.push_back(graph.getEdgeTarget(e));
+						isNeighbor[graph.getEdgeTarget(e)] = true;
 					endfor
 
-					std::vector<NodeID> targetNeighbors;
 					forall_out_edges(graph, e, edge.targetNode)
-						targetNeighbors.push_back(graph.getEdgeTarget(e));
+						count += isNeighbor[graph.getEdgeTarget(e)];
 					endfor
 
-					std::vector<NodeID> sharedNeighbors;
-					std::set_intersection(startNeighbors.begin(), startNeighbors.end(), targetNeighbors.begin(), targetNeighbors.end(), std::back_inserter(sharedNeighbors));
-					edgeFeatures[i].push_back(sharedNeighbors.size());
+					edgeFeatures[i].push_back(count);
+
+					forall_out_edges(graph, e, edge.startNode)
+						isNeighbor[graph.getEdgeTarget(e)] = false;
+					endfor
 
 				}
 					break;
 
-			case CLUSTERING_COEFFICIENTS_LOCAL:
-			{
+				case CLUSTERING_COEFFICIENTS_LOCAL:
+				{
 
-				edgeFeatures[i].push_back(clusteringCoefficient(graph, edge.startNode));
-				edgeFeatures[i].push_back(clusteringCoefficient(graph, edge.targetNode));
+					edgeFeatures[i].push_back(clusterCoefficents[edge.startNode]);
+					edgeFeatures[i].push_back(clusterCoefficents[edge.targetNode]);
 
-			}
-				break;
-
-
-			case GRAPHLETS:
-			{
-
-				std::string line;
-				std::getline(graphletFile, line);
-				std::stringstream stream(line);
-
-				float value;
-				while (stream >> value) {
-					edgeFeatures[i].push_back(value);
 				}
-			
-			}
-				break;
-			
-			default:
-				break;
+					break;
+
+
+				case GRAPHLETS:
+				{
+
+					std::string line;
+					std::getline(graphletFile, line);
+					std::stringstream stream(line);
+
+					float value;
+					while (stream >> value) {
+						edgeFeatures[i].push_back(value);
+					}
+				
+				}
+					break;
+				
+				default:
+					break;
 			}
 		}
 
