@@ -16,6 +16,7 @@ NodeID labelPropagateIteration(graph_access& graph, std::vector<NodeID>& toDoNod
 
 			// add probabilites
 			labelValues[labels[targetNode]] += edgeProbs[e];
+			
 		endfor
 
 		// find best label
@@ -47,8 +48,6 @@ NodeID labelPropagateIteration(graph_access& graph, std::vector<NodeID>& toDoNod
 			labelNodeCounts[maxPair.first] += 1;
 			labels[startNode] = maxPair.first;
 		}
-
-		
 
 	}
 
@@ -83,7 +82,7 @@ NodeID labelPropagateIteration(graph_access& graph, std::vector<NodeID>& toDoNod
 std::vector<PartitionID> labelPropagate(graph_access& graph, const std::vector<float>& edgeProbs, int iterations, bool randomOrder, PartitionID maxClusterSize) {
 
 	std::vector<NodeID> toDoNodes(graph.number_of_nodes());
-	std::iota(std::begin(toDoNodes), std::end(toDoNodes), 1);
+	std::iota(std::begin(toDoNodes), std::end(toDoNodes), 0);
 
 	// number of nodes per label/cluster
 	std::vector<NodeID> labelNodeCounts(graph.number_of_nodes(), 0);
@@ -95,6 +94,7 @@ std::vector<PartitionID> labelPropagate(graph_access& graph, const std::vector<f
 
 	// initialize the labels with the nodeIDs
 	std::vector<PartitionID> labels(toDoNodes);
+
 	
 	std::cout << "starting iterations" << std::endl;
 

@@ -12,6 +12,10 @@
 #include <ml_clustering/graphFeatures.h>
 #include <ml_clustering/inOut.h>
 #include <ml_clustering/labelPropagation.h>
+#include <ml_clustering/graphMetrics.h>
+
+
+	
 
 #include "parse_parameters.h"
 
@@ -126,9 +130,10 @@ void performLabelPropagation(std::string graphFile, std::string dataFilename, fl
 	graph_io graphIO;
 	graph_access graph;
 	graphIO.readGraphWeighted(graph, graphFile);
+
 	
 	std::cout << "starting label propagation" << std::endl;
-	auto res = labelPropagate(graph, probs, 200, true);
+	auto res = labelPropagate(graph, probs, 200, false);
 
 	std::cout << "finished propagation" << std::endl;
 
@@ -225,7 +230,9 @@ void performLabelPropagation(std::string graphFile, std::string dataFilename, fl
 	std::cout << "There were " << errorNoMatch << " edges wrong not clustered." << std::endl;
 	std::cout << "Error: " << static_cast<float>(errorNoMatch + errorMatch)/(i + 1) << std::endl;
 
-	
+	std::cout << "FP Rate: " << errorMatch / static_cast<float>(matchedEdges) << std::endl;
+
+	//std::cout << "Conductance: " << conductance(graph, res);
 }
 
 void performRandomLabelPropagation(std::string graphFile, std::string dataFilename, bool compare = true) {
@@ -368,7 +375,7 @@ int main(int argc, char** argv) {
 	std::cout << "performing label propagation" << std::endl;
 
 
-	performLabelPropagation(graph_filename, partition_config.dataFilename, 0.3, false);
+	performLabelPropagation(graph_filename, partition_config.dataFilename, 0.5, false);
 
 	return 0;
 }

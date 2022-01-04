@@ -62,7 +62,7 @@ endif()
 
 
 # check dependencies
-find_package(MPI REQUIRED)
+#find_package(MPI REQUIRED)
 find_package(OpenMP)
 if(OpenMP_CXX_FOUND)
   message(STATUS "OpenMP support detected")
@@ -207,6 +207,7 @@ set(LIBMLCLUSTERING_SOURCE_FILES
   lib/ml_clustering/graphFormats.cpp
   lib/ml_clustering/inOut.cpp
   lib/ml_clustering/labelPropagation.cpp
+  lib/ml_clustering/graphMetrics.cpp
   extern/argtable3-3.0.3/argtable3.c
 )
 add_library(libmlclustering OBJECT ${LIBMLCLUSTERING_SOURCE_FILES})

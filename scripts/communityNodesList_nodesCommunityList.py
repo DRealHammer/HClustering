@@ -1,6 +1,6 @@
 if __name__ == "__main__":
-	filename = "com-lj.top5000.cmty.txt"
-	outfile = "com-lj.top5000.cmty.txt-nodes"
+	filename = "com-amazon.top5000.cmty.txt-correct"
+	outfile = "com-amazon.cmty-nodes"
 
 
 	nodeCommunities = dict()

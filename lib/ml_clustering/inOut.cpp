@@ -84,14 +84,15 @@ std::map<NodeID, std::vector<CommID>> readCommunityFile(std::string fileName) {
 	}
 
 	// read the file
+	NodeID nodeID;
 	while (!file.eof()) {
 		std::string line;
 		std::getline(file, line, '\n');
 
 		std::stringstream lineStream(line);
 
-		NodeID nodeID;
 		lineStream >> nodeID;
+		nodeID--;
 		//std::cout << nodeID << "'s Communities found" << std::endl;
 
 		while (!lineStream.eof()) {
@@ -180,9 +181,11 @@ void writeFeaturesInFile(graph_access& graph, std::string outputFilename, std::m
 			switch (f){
 				case NODE_DEGREES:
 				{
-					
-					edgeFeatures[i].push_back(graph.getNodeDegree(edge.startNode));
-					edgeFeatures[i].push_back(graph.getNodeDegree(edge.targetNode));
+					edgeFeatures[i].push_back(graph.getNodeDegree(edge.startNode)/graph.number_of_nodes());
+					edgeFeatures[i].push_back(graph.getNodeDegree(edge.targetNode)/graph.number_of_nodes());
+
+					edgeFeatures[i].push_back(graph.getNodeDegree(edge.startNode)/graph.number_of_edges());
+					edgeFeatures[i].push_back(graph.getNodeDegree(edge.targetNode)/graph.number_of_edges());
 
 				}
 					break;
@@ -211,7 +214,8 @@ void writeFeaturesInFile(graph_access& graph, std::string outputFilename, std::m
 						count += isNeighbor[graph.getEdgeTarget(e)];
 					endfor
 
-					edgeFeatures[i].push_back(count);
+					edgeFeatures[i].push_back(count/graph.number_of_nodes());
+					edgeFeatures[i].push_back(count/graph.number_of_edges());
 
 					forall_out_edges(graph, e, edge.startNode)
 						isNeighbor[graph.getEdgeTarget(e)] = false;
@@ -239,7 +243,8 @@ void writeFeaturesInFile(graph_access& graph, std::string outputFilename, std::m
 
 					float value;
 					while (stream >> value) {
-						edgeFeatures[i].push_back(value);
+						edgeFeatures[i].push_back(value/graph.number_of_nodes());
+						edgeFeatures[i].push_back(value/graph.number_of_edges());
 					}
 				
 				}

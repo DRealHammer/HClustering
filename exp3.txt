@@ -1,0 +1,255 @@
+Working on feature NODE_DEGREES
+graph filename: data/com-amazon.metis
+output filename: data/com-amazon.metis-data
+comm filename: data/com-amazon.top5000.cmty.txt-nodes
+graphlet filename: data/com-amazon.metis.graphlet
+finished creating graphlet files
+graph filename: data/com-dblp.metis
+output filename: data/com-dblp.metis-data
+comm filename: data/com-dblp.top5000.cmty.txt-nodes
+graphlet filename: data/com-dblp.metis.graphlet
+finished creating graphlet files
+graph filename: data/email-Eu-core.metis
+output filename: data/email-Eu-core.metis-data
+comm filename: data/email-Eu-core.cmty.txt-nodes
+graphlet filename: data/email-Eu-core.metis.graphlet
+finished creating graphlet files
+reading file
+data filename: data/com-amazon.metis-data
+finished reading the file
+start training
+loading data/com-amazon.metis-data
+[0]	data/com-amazon.metis-data-rmse:0.35018026169237260
+[1]	data/com-amazon.metis-data-rmse:0.24536538258287741
+[2]	data/com-amazon.metis-data-rmse:0.17209974730429370
+[3]	data/com-amazon.metis-data-rmse:0.12085313336912019
+[4]	data/com-amazon.metis-data-rmse:0.08512776009500096
+[5]	data/com-amazon.metis-data-rmse:0.06026508650388934
+[6]	data/com-amazon.metis-data-rmse:0.04315164405867939
+[7]	data/com-amazon.metis-data-rmse:0.03146014046358487
+[8]	data/com-amazon.metis-data-rmse:0.02373892033714309
+[9]	data/com-amazon.metis-data-rmse:0.01868000558943575
+custom evaluation
+-------------------------- booster evaluation --------------------------
+Overall matched edges: 73
+There were 0 edges wrong clustered.
+There were 156 edges wrong not clustered.
+Error: 0.00016849
+freeing matrix of data/com-amazon.metis-data
+saving model
+reading file
+data filename: data/com-dblp.metis-data
+finished reading the file
+start training
+loading data/com-dblp.metis-data
+[0]	data/com-dblp.metis-data-rmse:0.18301702977868833
+[1]	data/com-dblp.metis-data-rmse:0.17958528352972392
+[2]	data/com-dblp.metis-data-rmse:0.17744091694333711
+[3]	data/com-dblp.metis-data-rmse:0.17605946794551805
+[4]	data/com-dblp.metis-data-rmse:0.17500643959191362
+[5]	data/com-dblp.metis-data-rmse:0.17404815196282122
+[6]	data/com-dblp.metis-data-rmse:0.17296159302662070
+[7]	data/com-dblp.metis-data-rmse:0.17237907175535838
+[8]	data/com-dblp.metis-data-rmse:0.17193352910841686
+[9]	data/com-dblp.metis-data-rmse:0.17123213665925494
+custom evaluation
+-------------------------- booster evaluation --------------------------
+Overall matched edges: 2402
+There were 451 edges wrong clustered.
+There were 36462 edges wrong not clustered.
+Error: 0.0351597
+freeing matrix of data/com-dblp.metis-data
+saving model
+reading file
+data filename: data/email-Eu-core.metis-data
+finished reading the file
+start training
+loading data/email-Eu-core.metis-data
+[0]	data/email-Eu-core.metis-data-rmse:0.28508360731952259
+[1]	data/email-Eu-core.metis-data-rmse:0.27579000316557301
+[2]	data/email-Eu-core.metis-data-rmse:0.27055125720163675
+[3]	data/email-Eu-core.metis-data-rmse:0.26603207329750639
+[4]	data/email-Eu-core.metis-data-rmse:0.26261716443515831
+[5]	data/email-Eu-core.metis-data-rmse:0.25947408198260691
+[6]	data/email-Eu-core.metis-data-rmse:0.25691433569595029
+[7]	data/email-Eu-core.metis-data-rmse:0.25495950943565981
+[8]	data/email-Eu-core.metis-data-rmse:0.25272861548523762
+[9]	data/email-Eu-core.metis-data-rmse:0.25217885822812314
+custom evaluation
+-------------------------- booster evaluation --------------------------
+Overall matched edges: 200
+There were 3 edges wrong clustered.
+There were 1274 edges wrong not clustered.
+Error: 0.0794945
+freeing matrix of data/email-Eu-core.metis-data
+saving model
+Working on feature SHARED_NEIGHBOR_COUNT
+graph filename: data/com-amazon.metis
+output filename: data/com-amazon.metis-data
+comm filename: data/com-amazon.top5000.cmty.txt-nodes
+graphlet filename: data/com-amazon.metis.graphlet
+finished creating graphlet files
+graph filename: data/com-dblp.metis
+output filename: data/com-dblp.metis-data
+comm filename: data/com-dblp.top5000.cmty.txt-nodes
+graphlet filename: data/com-dblp.metis.graphlet
+finished creating graphlet files
+graph filename: data/email-Eu-core.metis
+output filename: data/email-Eu-core.metis-data
+comm filename: data/email-Eu-core.cmty.txt-nodes
+graphlet filename: data/email-Eu-core.metis.graphlet
+finished creating graphlet files
+reading file
+data filename: data/com-amazon.metis-data
+finished reading the file
+start training
+loading data/com-amazon.metis-data
+[0]	data/com-amazon.metis-data-rmse:0.35018026169237260
+[1]	data/com-amazon.metis-data-rmse:0.24536538258287741
+[2]	data/com-amazon.metis-data-rmse:0.17209974730429370
+[3]	data/com-amazon.metis-data-rmse:0.12085490016533847
+[4]	data/com-amazon.metis-data-rmse:0.08513602589368421
+[5]	data/com-amazon.metis-data-rmse:0.06029071618024631
+[6]	data/com-amazon.metis-data-rmse:0.04317000375410594
+[7]	data/com-amazon.metis-data-rmse:0.03146646177286736
+[8]	data/com-amazon.metis-data-rmse:0.02370798162985888
+[9]	data/com-amazon.metis-data-rmse:0.01867933584450496
+custom evaluation
+-------------------------- booster evaluation --------------------------
+Overall matched edges: 70
+There were 0 edges wrong clustered.
+There were 159 edges wrong not clustered.
+Error: 0.00017173
+freeing matrix of data/com-amazon.metis-data
+saving model
+reading file
+data filename: data/com-dblp.metis-data
+finished reading the file
+start training
+loading data/com-dblp.metis-data
+[0]	data/com-dblp.metis-data-rmse:0.18288844214899258
+[1]	data/com-dblp.metis-data-rmse:0.17939643415394008
+[2]	data/com-dblp.metis-data-rmse:0.17715262155225228
+[3]	data/com-dblp.metis-data-rmse:0.17565347406239690
+[4]	data/com-dblp.metis-data-rmse:0.17441804672210545
+[5]	data/com-dblp.metis-data-rmse:0.17349698265761582
+[6]	data/com-dblp.metis-data-rmse:0.17259662044164864
+[7]	data/com-dblp.metis-data-rmse:0.17172641806181180
+[8]	data/com-dblp.metis-data-rmse:0.17145788609738002
+[9]	data/com-dblp.metis-data-rmse:0.17080650588971746
+custom evaluation
+-------------------------- booster evaluation --------------------------
+Overall matched edges: 2269
+There were 434 edges wrong clustered.
+There were 36578 edges wrong not clustered.
+Error: 0.035254
+freeing matrix of data/com-dblp.metis-data
+saving model
+reading file
+data filename: data/email-Eu-core.metis-data
+finished reading the file
+start training
+loading data/email-Eu-core.metis-data
+[0]	data/email-Eu-core.metis-data-rmse:0.28637897690272618
+[1]	data/email-Eu-core.metis-data-rmse:0.27858218197932982
+[2]	data/email-Eu-core.metis-data-rmse:0.27287604614181793
+[3]	data/email-Eu-core.metis-data-rmse:0.26980503606105294
+[4]	data/email-Eu-core.metis-data-rmse:0.26531842671110184
+[5]	data/email-Eu-core.metis-data-rmse:0.26310092435346655
+[6]	data/email-Eu-core.metis-data-rmse:0.25872507143268469
+[7]	data/email-Eu-core.metis-data-rmse:0.25794418553107301
+[8]	data/email-Eu-core.metis-data-rmse:0.25639145082119480
+[9]	data/email-Eu-core.metis-data-rmse:0.25532152561887805
+custom evaluation
+-------------------------- booster evaluation --------------------------
+Overall matched edges: 157
+There were 3 edges wrong clustered.
+There were 1317 edges wrong not clustered.
+Error: 0.0821713
+freeing matrix of data/email-Eu-core.metis-data
+saving model
+Working on feature CLUSTERING_COEFFICIENTS_LOCAL
+graph filename: data/com-amazon.metis
+output filename: data/com-amazon.metis-data
+comm filename: data/com-amazon.top5000.cmty.txt-nodes
+graphlet filename: data/com-amazon.metis.graphlet
+finished creating graphlet files
+graph filename: data/com-dblp.metis
+output filename: data/com-dblp.metis-data
+comm filename: data/com-dblp.top5000.cmty.txt-nodes
+graphlet filename: data/com-dblp.metis.graphlet
+finished creating graphlet files
+graph filename: data/email-Eu-core.metis
+output filename: data/email-Eu-core.metis-data
+comm filename: data/email-Eu-core.cmty.txt-nodes
+graphlet filename: data/email-Eu-core.metis.graphlet
+finished creating graphlet files
+reading file
+data filename: data/com-amazon.metis-data
+finished reading the file
+start training
+loading data/com-amazon.metis-data
+[0]	data/com-amazon.metis-data-rmse:0.35018026169237260
+[1]	data/com-amazon.metis-data-rmse:0.24536754348524409
+[2]	data/com-amazon.metis-data-rmse:0.17210026579395205
+[3]	data/com-amazon.metis-data-rmse:0.12085550864121397
+[4]	data/com-amazon.metis-data-rmse:0.08513317511461076
+[5]	data/com-amazon.metis-data-rmse:0.06027972985277125
+[6]	data/com-amazon.metis-data-rmse:0.04310682791191067
+[7]	data/com-amazon.metis-data-rmse:0.03143726121204143
+[8]	data/com-amazon.metis-data-rmse:0.02367103473352411
+[9]	data/com-amazon.metis-data-rmse:0.01869875560616742
+custom evaluation
+-------------------------- booster evaluation --------------------------
+Overall matched edges: 65
+There were 0 edges wrong clustered.
+There were 164 edges wrong not clustered.
+Error: 0.00017713
+freeing matrix of data/com-amazon.metis-data
+saving model
+reading file
+data filename: data/com-dblp.metis-data
+finished reading the file
+start training
+loading data/com-dblp.metis-data
+[0]	data/com-dblp.metis-data-rmse:0.18300492131160759
+[1]	data/com-dblp.metis-data-rmse:0.17971660221226227
+[2]	data/com-dblp.metis-data-rmse:0.17771970845389748
+[3]	data/com-dblp.metis-data-rmse:0.17592981816628239
+[4]	data/com-dblp.metis-data-rmse:0.17461630555362467
+[5]	data/com-dblp.metis-data-rmse:0.17395782302240143
+[6]	data/com-dblp.metis-data-rmse:0.17269947291990964
+[7]	data/com-dblp.metis-data-rmse:0.17203868981634574
+[8]	data/com-dblp.metis-data-rmse:0.17145036230468341
+[9]	data/com-dblp.metis-data-rmse:0.17114971572671575
+custom evaluation
+-------------------------- booster evaluation --------------------------
+Overall matched edges: 2401
+There were 431 edges wrong clustered.
+There were 36443 edges wrong not clustered.
+Error: 0.0351226
+freeing matrix of data/com-dblp.metis-data
+saving model
+reading file
+data filename: data/email-Eu-core.metis-data
+finished reading the file
+start training
+loading data/email-Eu-core.metis-data
+[0]	data/email-Eu-core.metis-data-rmse:0.28311584760688852
+[1]	data/email-Eu-core.metis-data-rmse:0.27579138435585099
+[2]	data/email-Eu-core.metis-data-rmse:0.27079801259814468
+[3]	data/email-Eu-core.metis-data-rmse:0.26612064873968361
+[4]	data/email-Eu-core.metis-data-rmse:0.26277026373607465
+[5]	data/email-Eu-core.metis-data-rmse:0.25972610646115130
+[6]	data/email-Eu-core.metis-data-rmse:0.25660613876530741
+[7]	data/email-Eu-core.metis-data-rmse:0.25455432288140140
+[8]	data/email-Eu-core.metis-data-rmse:0.25328672572403815
+[9]	data/email-Eu-core.metis-data-rmse:0.25181414410031261
+custom evaluation
+-------------------------- booster evaluation --------------------------
+Overall matched edges: 200
+There were 7 edges wrong clustered.
+There were 1278 edges wrong not clustered.
+Error: 0.0799925
+freeing matrix of data/email-Eu-core.metis-data
+saving model

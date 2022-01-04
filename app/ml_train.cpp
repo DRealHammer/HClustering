@@ -56,6 +56,8 @@ void evaluateBooster(BoosterHandle& booster, DMatrixHandle& dmat) {
 	std::cout << "There were " << errorMatch << " edges wrong clustered." << std::endl;
 	std::cout << "There were " << errorNoMatch << " edges wrong not clustered." << std::endl;
 	std::cout << "Error: " << static_cast<float>(errorNoMatch + errorMatch)/(len_predict) << std::endl;
+
+
 }
 
 void train(std::string dataFilename, std::string boosterFilename) {
@@ -91,7 +93,7 @@ void train(std::string dataFilename, std::string boosterFilename) {
 	const char* name = dataFilename.c_str();
 	const char* eval_result = NULL;
 
-	for (int iter = 0; iter < 10; iter++) {
+	for (int iter = 0; iter < 30; iter++) {
 		if(XGBoosterUpdateOneIter(booster, iter, dtrain)) {
 			std::cout << XGBGetLastError() << std::endl;
 			std::cout << "could not train" << std::endl;

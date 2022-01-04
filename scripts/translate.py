@@ -170,7 +170,7 @@ def ungraph_to_metis(graphFilename):
 			uniqueIDs.add(startNode)
 			uniqueIDs.add(toNode)
 
-	nodeCount = len(uniqueIDs) + 1
+	nodeCount = len(uniqueIDs)
 
 	print(f"found {nodeCount} Nodes and {edgeCount} edges")
 
@@ -197,7 +197,7 @@ def ungraph_to_metis(graphFilename):
 
 	with open(graphFilename + ".metis", "w") as outFile:
 		# reduce by 1 again, because we added 1 for the indices to be correct
-		outFile.write(f"{nodeCount - 1} {edgeCount}")
+		outFile.write(f"{nodeCount} {edgeCount}")
 		for neighbors in graph:
 			neighborStrings = [str(neighbor) for neighbor in neighbors]
 			outFile.write(" ".join(neighborStrings) + "\n")
@@ -206,6 +206,6 @@ def ungraph_to_metis(graphFilename):
 
 
 
-#correct_missing_indices_nodebased_cmty("email-Eu-core.ungraph.txt", "email-Eu-core.cmty.txt")
+correct_missing_indices("com-amazon.ungraph.txt", "com-amazon.top5000.cmty.txt")
 
-ungraph_to_metis("email-Eu-core.ungraph.txt-correct-sorted")
+ungraph_to_metis("com-amazon.ungraph.txt-correct")
