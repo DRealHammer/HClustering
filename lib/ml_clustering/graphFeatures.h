@@ -6,6 +6,7 @@
 #include <iostream>
 #include <fstream>
 #include <map>
+#include <queue>
 
 // openmp
 #include <omp.h>
@@ -36,8 +37,11 @@ enum FEATURE {
 	EDGE_COUNT,
 	SHARED_NEIGHBOR_COUNT,
 	CLUSTERING_COEFFICIENTS_LOCAL,
-	GRAPHLETS
+	GRAPHLETS,
+	SECOND_DEGREE,
+	CENTRALITY
 };
 
 bool shareCommunity(const std::vector<CommID>& aComms, const std::vector<CommID>& bComms);
 float clusteringCoefficient(graph_access& graph, NodeID node);
+std::vector<float> nodeCentralities(graph_access& graph);

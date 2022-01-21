@@ -37,6 +37,7 @@ struct arg_end *ending;
 
 
 std::vector<float> getEdgeProbs(std::string graphFile, std::string boosterFilename, DMatrixHandle dmat) {
+
 	BoosterHandle booster;
 	XGBoosterCreate(&dmat, 1, &booster);
 	
@@ -51,19 +52,27 @@ std::vector<float> getEdgeProbs(std::string graphFile, std::string boosterFilena
 	// predictions
 
 	bst_ulong out_len = 0;
-	const float* out_result = nullptr;
+	float* out_result = nullptr;
 
 	XGBoosterPredict(booster, dmat, 0, 0, 0, &out_len, &out_result);
+
+	// set all negative edges to 0 and 
+	for (int i = 0; i < out_len; i++) {
+		if (out_result[i] < 0) {
+			out_result[i] = 0;
+		}
+		out_result[i] += 0.0000001;
+	}
 
 	
 
 	// propagation
 
-
 	std::cout << "finished prediction, starting to propagate through the graph" << std::endl;
 	graph_io graphIO;
 	graph_access graph;
 	graphIO.readGraphWeighted(graph, graphFile);
+
 
 
 	std::vector<float> probs(graph.number_of_edges());
@@ -77,6 +86,7 @@ std::vector<float> getEdgeProbs(std::string graphFile, std::string boosterFilena
 				continue;
 			}
 			
+			//std::cout << startNode << " -> " << targetNode << " weight: " << out_result[i] << std::endl;
 			probs[e] = out_result[i];
 
 			forall_out_edges(graph, inverse_e, targetNode)
@@ -89,7 +99,50 @@ std::vector<float> getEdgeProbs(std::string graphFile, std::string boosterFilena
 		endfor
 	endfor
 
+	for (auto& p : probs) {
+		//p = 1;
+	}
+
 	return probs;
+}
+
+void printPrediction(std::string graphFile, std::string dataFilename) {
+
+
+	// loading of the data and model
+
+
+	std::cout << "graph file: " << graphFile << std::endl;
+	std::cout << "data file: " << dataFilename << std::endl;
+	std::string boosterFilename = "booster.json";
+
+	if (!std::ifstream(dataFilename).good()) {
+		std::cout << "Error: no data file found, extract your features beforehand" << std::endl;
+		return;
+	}
+
+
+	DMatrixHandle dmat;
+	XGDMatrixCreateFromFile(dataFilename.c_str(), 0, &dmat);
+
+
+	BoosterHandle booster;
+	XGBoosterCreate(&dmat, 1, &booster);
+	
+
+	XGBoosterLoadModel(booster, boosterFilename.c_str());
+
+	// predictions
+
+	bst_ulong out_len = 0;
+	const float* out_result = nullptr;
+
+	XGBoosterPredict(booster, dmat, 0, 0, 0, &out_len, &out_result);
+
+
+	for (int i = 0; i < out_len; i++) {
+		std::cout << out_result[i] << '\n';
+	}
 }
 
 void performLabelPropagation(std::string graphFile, std::string dataFilename, float threshold = 0.5, bool compare = false) {
@@ -113,34 +166,34 @@ void performLabelPropagation(std::string graphFile, std::string dataFilename, fl
 
 	auto probs = getEdgeProbs(graphFile, boosterFilename, dmat);
 
+	std::random_device rd;
+	std::mt19937 e2(rd());
+	std::uniform_real_distribution<> val(0, 1);
 
-	// ********* Experimental ***********
-
-
-
-	// subtract the threshold from all probs
-	for (auto& val : probs) {
-		val -= threshold;
+	for (auto& p : probs) {
+		p = 1;
 	}
 
-
-
-	// ************ end of experimental ************
-
+	
 	graph_io graphIO;
 	graph_access graph;
 	graphIO.readGraphWeighted(graph, graphFile);
 
+	forall_nodes(graph, start)
+		forall_out_edges(graph, e, start)
+			NodeID target = graph.getEdgeTarget(e);
+			std::cout << start + 1 << " -> " << target + 1 << ": " << probs[e] << std::endl; 
+		endfor
+	endfor
 	
 	std::cout << "starting label propagation" << std::endl;
-	auto res = labelPropagate(graph, probs, 200, false);
+	auto res = labelPropagate(graph, probs, 200, true);
 
 	std::cout << "finished propagation" << std::endl;
 
 
 
 	// evaluation
-
 
 
 	std::vector<PartitionID> labelCounts(graph.number_of_nodes());
@@ -188,168 +241,20 @@ void performLabelPropagation(std::string graphFile, std::string dataFilename, fl
 		}
 	}
 
+	
+
 	std::cout << "Matched " << matchedEdges << " edges" << std::endl;
 	std::cout << "Created " << labelAmount << " clusters" << std::endl;
 	std::cout << "Smallest cluster: " << minClustersize << std::endl;
 	std::cout << "Largest cluster: " << maxClustersize << std::endl;
+	std::cout << "Conductance: " << conductance(graph, res) << std::endl;
 
-
-
-	bst_ulong out_len = 0;
-	const float* out_result = nullptr;
-
-	std::size_t errorMatch = 0;
-	std::size_t errorNoMatch = 0;
-	XGDMatrixGetFloatInfo(dmat, "label", &out_len, &out_result);
-
-	int i = 0;
-	forall_nodes(graph, startNode)
-		forall_out_edges(graph, e, startNode)
-			NodeID targetNode = graph.getEdgeTarget(e);
-
-			// skip big -> small edges
-			if (startNode > targetNode) {
-				continue;
-			}
-			i++;
-
-			// if have the same resulting label
-			// the edge was matched
-
-			bool wasMatched = res[startNode] == res[targetNode];
-			bool shouldMatch = out_result[i] == 0 ? false : true;
-
-
-		errorMatch += wasMatched && !shouldMatch;
-		errorNoMatch += !wasMatched && shouldMatch;
-
-		endfor
+	std::cout << "propagated labels:" << std::endl;
+	forall_nodes(graph, node)
+		std::cout << node + 1 << " " << res[node] << std::endl;
 	endfor
-
-	std::cout << "There were " << errorMatch << " edges wrong clustered." << std::endl;
-	std::cout << "There were " << errorNoMatch << " edges wrong not clustered." << std::endl;
-	std::cout << "Error: " << static_cast<float>(errorNoMatch + errorMatch)/(i + 1) << std::endl;
-
-	std::cout << "FP Rate: " << errorMatch / static_cast<float>(matchedEdges) << std::endl;
-
-	//std::cout << "Conductance: " << conductance(graph, res);
 }
 
-void performRandomLabelPropagation(std::string graphFile, std::string dataFilename, bool compare = true) {
-
-	std::cout << "graph file: " << graphFile << std::endl;
-	std::cout << "data file: " << dataFilename << std::endl;
-
-	if (!std::ifstream(dataFilename).good()) {
-		std::cout << "Error: no data file found, extract your features beforehand" << std::endl;
-		return;
-	}
-
-
-
-	graph_io graphIO;
-	graph_access graph;
-	graphIO.readGraphWeighted(graph, graphFile);
-
-	std::random_device rd;
-	std::mt19937 e2(rd());
-	std::uniform_real_distribution<> val(0, 1);
-
-	std::vector<float> probs(graph.number_of_edges());
-	for (int i = 0; i < graph.number_of_nodes(); i++) {
-		probs[i] = val(e2);
-	}
-
-
-
-	// ********* Experimental ***********
-
-
-	// find mean of the probs
-	float sum = 0;
-
-	for (auto val : probs) {
-		sum += val;
-	}
-	float mean = sum/probs.size();
-
-
-	// subtract it from all
-	for (auto& val : probs) {
-		val -= mean;
-	}
-
-
-
-	// ************ end of experimental ************
-
-
-	std::cout << "starting label propagation" << std::endl;
-	auto res = labelPropagate(graph, probs, 200, true);
-
-	std::vector<PartitionID> labelCounts(graph.number_of_nodes());
-	
-	// count the different clusters created
-	for (auto nodeLabel : res) {
-		labelCounts[nodeLabel] += 1;
-	}
-
-	int labelAmount = 0;
-	int maxClustersize = 0;
-	int minClustersize = std::numeric_limits<int>::max();
-	for(auto count : labelCounts) {
-		if (count > 0 ) {
-			labelAmount++;
-
-			if (count < minClustersize) {
-				minClustersize = count;
-			}
-
-			if (count > maxClustersize) {
-				maxClustersize = count;
-			}
-		}
-	}
-
-	std::cout << "Created " << labelAmount << " clusters" << std::endl;
-	std::cout << "Smallest cluster: " << minClustersize << std::endl;
-	std::cout << "Largest cluster: " << maxClustersize << std::endl;
-
-
-	std::size_t errorMatch = 0;
-	std::size_t errorNoMatch = 0;
-	std::ifstream compareFile(dataFilename);
-
-	forall_nodes(graph, startNode)
-		forall_out_edges(graph, e, startNode)
-
-		NodeID targetNode = graph.getEdgeTarget(e);
-
-		if (targetNode < startNode) {
-			continue;
-		}
-
-		bool propagateMatched = res[startNode] == res[targetNode];
-		
-		std::string line;
-		std::getline(compareFile, line);
-		
-
-		bool shouldMatch = line[0] == '1';
-
-		errorMatch += propagateMatched && !shouldMatch;
-		errorNoMatch += !propagateMatched && shouldMatch;
-
-		endfor
-
-	endfor
-
-
-	std::cout << "There were " << errorMatch << " edges wrong clustered." << std::endl;
-	std::cout << "There were " << errorNoMatch << " edges wrong not clustered." << std::endl;
-	std::cout << "Error: " << static_cast<float>(errorNoMatch + errorMatch)/(graph.number_of_edges()/2.0f) << std::endl;
-
-}
 
 
 int main(int argc, char** argv) {
@@ -371,11 +276,14 @@ int main(int argc, char** argv) {
 			return 0;
 	}
 
+	//std::cout << "edge weight predictions" << std::endl;
+	//printPrediction(graph_filename, partition_config.dataFilename);
 
+	std::cout << "------------------------" << std::endl;
 	std::cout << "performing label propagation" << std::endl;
 
-
-	performLabelPropagation(graph_filename, partition_config.dataFilename, 0.5, false);
+	//printPrediction(graph_filename, partition_config.dataFilename);
+	performLabelPropagation(graph_filename, partition_config.dataFilename, 0.142724, true);
 
 	return 0;
 }

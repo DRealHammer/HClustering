@@ -53,7 +53,12 @@ int main(int argc, char** argv) {
 	std::cout << "comm filename: " << communityFilename << std::endl;
 	std::cout << "graphlet filename: " << graphletFilename << std::endl;
 
+
 	writeGraphFeatureFile(graph_filename, outputFilename, communityFilename, graphletFilename, featureFilename);
+
+	
+	
+	
 
 	return 0;
 }

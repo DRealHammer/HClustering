@@ -69,3 +69,80 @@ bool shareCommunity(const std::vector<CommID>& aComms, const std::vector<CommID>
 
 	return result.size() > 0;
 }
+
+struct BFSVisitNode {
+	NodeID id;
+	NodeID parent;
+};
+
+void performBFS(graph_access& graph, NodeID currentNode, std::queue<BFSVisitNode>& queue, std::vector<NodeID>& visited, std::vector<float>& visitCounts, std::vector<NodeID>& parents) {
+
+	visited[currentNode] = currentNode;
+	// add all neighbors to the queue
+	forall_out_edges(graph, e, currentNode)
+		queue.push({graph.getEdgeTarget(e), currentNode});
+	endfor
+
+	BFSVisitNode visitNode;
+	// visit all nodes
+	while(!queue.empty()) {
+		visitNode = queue.front();
+		queue.pop();
+
+		// we have seen this node before, skip it
+		if (visited[visitNode.id] == currentNode) {
+			continue;
+		}
+
+		// we see this node for the first time
+		visited[visitNode.id] = currentNode;
+		parents[visitNode.id] = visitNode.parent;
+
+		// add all possible children
+		forall_out_edges(graph, e, visitNode.id)
+			queue.push({graph.getEdgeTarget(e), visitNode.id});
+		endfor;
+	}
+
+	// we have a shortest path tree from the current node to all others
+	// we go from all nodes to the currentNode and add 1 on each visited node on the way
+
+	NodeID runningNode;
+	forall_nodes(graph, node)
+		runningNode = node;
+
+		// skip unconnected nodes
+		if (visited[runningNode] != currentNode) {
+			continue;
+		}
+
+		while(runningNode != currentNode) {
+			visitCounts[runningNode] += 1;
+			runningNode = parents[runningNode];
+		}
+
+	endfor
+}
+
+std::vector<float> nodeCentralities(graph_access& graph) {
+
+	std::vector<float> result(graph.number_of_nodes());
+	std::queue<BFSVisitNode> queue;
+	std::vector<NodeID> visited(graph.number_of_nodes(), -1);
+	std::vector<NodeID> parents(graph.number_of_nodes());
+
+	forall_nodes(graph, node)
+
+		//std::cout << "bfs for node " << node << std::endl;
+		performBFS(graph, node, queue, visited, result, parents);
+
+	endfor
+
+	float divider = 2 * (graph.number_of_nodes() - 1 ) * (graph.number_of_nodes() - 2);
+
+	for (auto& c : result) {
+		c = c / divider;
+	}
+	
+	return result;
+}

@@ -8,26 +8,30 @@ struct Volumes {
 float conductance(graph_access& graph, std::vector<PartitionID>& clustering) {
     
     // get all existing cluster ids
-    std::vector<PartitionID> clusterIds;
+    PartitionID clusterCount = 0;
     {
-        std::vector<bool> clusterExists(clustering.size(), false);
+        std::map<PartitionID, PartitionID> uniqueClusterIds;
 
         for (auto c : clustering) {
-            clusterExists[c] = true;
+
+            // if we don't know the cluster yet
+            if (uniqueClusterIds.find(c) == uniqueClusterIds.end()) {
+                uniqueClusterIds[c] = clusterCount;
+                clusterCount++;
+            }
         }
 
-        for (int i = 0; i < clusterExists.size(); i++) {
-            if (clusterExists[i]) {
-                clusterIds.push_back(i);
-            }
+
+        // translate old labels to new indices
+        for (auto& c : clustering) {
+            c = uniqueClusterIds[c];
         }
     }
 
-    std::vector<float> conductances(clusterIds.size(), 0);
+    std::vector<float> conductances(clusterCount, 0);
     {
-        #pragma omp parallel for
-        for (int i = 0; i < clusterIds.size(); i++) {
-            PartitionID c = clusterIds[i];
+        //#pragma omp parallel for
+        for (int c = 0; c < clusterCount; c++) {
 
             // calculate the cut weight
             forall_nodes(graph, startNode)
@@ -37,20 +41,20 @@ float conductance(graph_access& graph, std::vector<PartitionID>& clustering) {
 
                 forall_out_edges(graph, e, startNode)
                     NodeID targetNode = graph.getEdgeTarget(e);
-                    conductances[i] += clustering[targetNode] != c;
+                    conductances[c] += clustering[targetNode] != c;
                 endfor
             endfor
         }
 
         // calculate the volumes a(C), a(V\C)
         // and divide by the minimum
-        #pragma omp parallel for
-        for (int i = 0; i < clusterIds.size(); i++) {
+        //#pragma omp parallel for
+        for (int c = 0; c < clusterCount; c++) {
             Volumes v = {0, 0};
-            PartitionID c = clusterIds[i];
 
             forall_nodes(graph, startNode)
                 int deg = graph.getNodeDegree(startNode);
+
                 if (clustering[startNode] == c) {
                     v.own += deg;
                 } else {
@@ -61,12 +65,11 @@ float conductance(graph_access& graph, std::vector<PartitionID>& clustering) {
             int min = std::min(v.own, v.complement);
 
             if (min == 0) {
-                conductances[i] = std::numeric_limits<float>::infinity();
+                continue;
             } else {
-                float val = conductances[i] / static_cast<float>(min);
-                conductances[i] = val;
+                float val = conductances[c] / static_cast<float>(min);
+                conductances[c] = val;
             }
-
         }
 
         
