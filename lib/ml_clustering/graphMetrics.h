@@ -3,4 +3,4 @@
 #include <algorithm>
 #include <map>
 
-float conductance(graph_access& graph, std::vector<PartitionID>& clustering);
+float conductance(graph_access& graph, std::vector<PartitionID> clustering);

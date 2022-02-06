@@ -136,7 +136,11 @@ int parse_parameters(int argn, char **argv,
 #endif
 
 #ifdef MODE_ML_TRAIN
+        struct arg_str *testFilename                      = arg_strn(NULL, "test", "testFilename", 0, 1, "The path to the file used for testing");
         struct arg_str *modelFilename                     = arg_strn(NULL, "model", "modelFilename", 0, 1, "The path to the model used for training");
+        struct arg_int *iterations                        = arg_int0(NULL, "iterations", NULL, "Number of iterations for the training");
+        struct arg_int *estimators                        = arg_int0(NULL, "estimators", NULL, "Number of estimators for the training");
+        struct arg_int *depth                             = arg_int0(NULL, "depth", NULL, "depth of the training");
 #endif
 
 #ifdef MODE_ML_LABEL_PROPAGATION
@@ -295,6 +299,8 @@ int parse_parameters(int argn, char **argv,
                 featureFilename,
 #elif defined MODE_ML_TRAIN
                 modelFilename,
+                testFilename,
+                iterations,
 #elif defined MODE_ML_LABEL_PROPAGATION
                 modelFilename,
                 dataFilename,
@@ -444,6 +450,8 @@ int parse_parameters(int argn, char **argv,
 
 #ifdef MODE_ML_TRAIN
         partition_config.modelFilename = modelFilename->sval[0];
+        partition_config.testFilename = testFilename->sval[0];
+        partition_config.iterations = iterations->ival[0];
 #endif
 
 #ifdef MODE_ML_LABEL_PROPAGATION

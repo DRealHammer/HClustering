@@ -443,8 +443,11 @@ struct PartitionConfig
         std::string graphletFilename;
         std::string dataFilename;
         std::string featureFilename;
+        std::string testFilename;
 
         std::string modelFilename;
+
+        int iterations;
 };
 
 

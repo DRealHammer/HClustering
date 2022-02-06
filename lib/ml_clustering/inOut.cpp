@@ -343,8 +343,18 @@ void writeFeaturesInFile(graph_access& graph, std::string outputFilename, std::m
 
 	std::vector<float> labels(graph.number_of_edges()/2);
 	bool hasLabels = nodeCommunites.size() != 0;
+
 	// we have given communities
 	if (hasLabels) {
+
+		// create clustering array from the communities
+		std::vector<PartitionID> clustering;
+
+		for (int i = 0; i < graph.number_of_nodes(); i++) {
+			clustering.push_back(nodeCommunites[i][0]);
+		}
+
+		conductance(graph, clustering);
 
 		// for all edges
 		for (int i = 0; i < relevantEdges.size(); i++) {
@@ -357,7 +367,46 @@ void writeFeaturesInFile(graph_access& graph, std::string outputFilename, std::m
 	}
 
 
-	// finish the data creation, now fill them into the final features vector
+	// finish the data creation
+
+
+	std::vector<float> means(edgeFeatures[0].size());
+	// normalize the means
+	for (auto features : edgeFeatures) {
+		for (int featureIdx = 0; featureIdx < features.size(); featureIdx++) {
+			means[featureIdx] += features[featureIdx];
+		}
+	}
+
+	for (auto& m : means) {
+		m /= edgeFeatures.size();
+	}
+
+	
+	for (auto features : edgeFeatures) {
+		for (int featureIdx = 0; featureIdx < features.size(); featureIdx++) {
+			features[featureIdx] -= means[featureIdx];
+		}
+	}
+
+	std::vector<float> stddevs(edgeFeatures[0].size());
+	// normalize the stddev
+	for (auto features : edgeFeatures) {
+		for (int featureIdx = 0; featureIdx < features.size(); featureIdx++) {
+			stddevs[featureIdx] += features[featureIdx] * features[featureIdx];
+		}
+	}
+
+	for (auto& dev : stddevs) {
+		dev = std::sqrt(dev / edgeFeatures.size());
+	}
+
+	for (auto features : edgeFeatures) {
+		for (int featureIdx = 0; featureIdx < features.size(); featureIdx++) {
+			features[featureIdx] /= stddevs[featureIdx];
+		}
+	}
+
 	
 	// add the features in a file
 	std::ofstream featureFile(outputFilename);
@@ -367,6 +416,7 @@ void writeFeaturesInFile(graph_access& graph, std::string outputFilename, std::m
 	//#define featureWrite(file, nr, val) std::fprintf(file, " %d:%f", nr, static_cast<float>(val));
 
 	for (int i = 0; i < relevantEdges.size(); i++) {
+
 
 		if (hasLabels) {
 			featureFile << labels[i];

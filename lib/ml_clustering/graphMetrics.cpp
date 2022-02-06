@@ -5,12 +5,13 @@ struct Volumes {
     int complement;
 };
 
-float conductance(graph_access& graph, std::vector<PartitionID>& clustering) {
+float conductance(graph_access& graph, std::vector<PartitionID> clustering) {
     
     // get all existing cluster ids
     PartitionID clusterCount = 0;
+    std::map<PartitionID, PartitionID> uniqueClusterIds;
     {
-        std::map<PartitionID, PartitionID> uniqueClusterIds;
+        
 
         for (auto c : clustering) {
 
@@ -30,7 +31,7 @@ float conductance(graph_access& graph, std::vector<PartitionID>& clustering) {
 
     std::vector<float> conductances(clusterCount, 0);
     {
-        //#pragma omp parallel for
+
         for (int c = 0; c < clusterCount; c++) {
 
             // calculate the cut weight
@@ -74,6 +75,17 @@ float conductance(graph_access& graph, std::vector<PartitionID>& clustering) {
 
         
 
+    }
+
+    std::cout << "all conductances" << std::endl;
+    for (int i = 0; i < conductances.size(); i++) {
+        
+        for (auto it = uniqueClusterIds.begin(); it != uniqueClusterIds.end(); it++) {
+            if (it->second == i) {
+                std::cout << it->first << " ";
+            }
+        }
+        std::cout << conductances[i] << std::endl;
     }
 
     return *std::max_element(conductances.begin(), conductances.end());

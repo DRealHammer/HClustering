@@ -1,13 +1,100 @@
 #include <ml_clustering/labelPropagation.h>
 
+// returns the new number of toDoNodes
+NodeID labelPropagateIterationGreedy(graph_access& graph, std::vector<NodeID>& toDoNodes, std::vector<PartitionID>& labels, const std::vector<float>& edgeProbs, std::vector<NodeID>& labelNodeCounts) {
+
+
+	std::vector<int> nodeLabelChanged(graph.number_of_nodes(), 0);
+
+	// for every node find the best neighbor
+	for (auto currentNode : toDoNodes) {
+
+		if (currentNode == 224) {
+			std::cout << "224 detected" << std::endl;
+		}
+
+
+		// find all weighted frequencies of the labels
+		std::map<PartitionID, float> gains;
+		forall_out_edges(graph, e, currentNode)
+
+			NodeID target = graph.getEdgeTarget(e);
+			gains[labels[target]] += edgeProbs[e];
+
+		endfor
+
+
+
+		// find the highest frequency label
+		std::pair<PartitionID, float> maxPair = {0, 0};
+		for (auto pair : gains) {
+
+
+			if (pair.second > maxPair.second) {
+				maxPair = pair;
+			}
+		}
+
+		
+		nodeLabelChanged[currentNode] = labels[currentNode] != maxPair.first;
+
+		if (nodeLabelChanged[currentNode]) {
+
+			// subtract the count of the old label
+			labelNodeCounts[labels[currentNode]] -= 1;
+
+			// add it to the new label
+			labelNodeCounts[maxPair.first] += 1;
+			labels[currentNode] = maxPair.first;
+
+		}
+			
+	}
+
+
+	// create new toDo for next iteration
+	toDoNodes = std::vector<NodeID>();
+
+	// add the neighbors to the todo as well
+	forall_nodes(graph, node)
+
+		// if the node itself changed
+		if (nodeLabelChanged[node]){
+
+			// all neighbors will be added
+			// but their neighbors will not be added
+			forall_out_edges(graph, e, node)
+					nodeLabelChanged[graph.getEdgeTarget(e)] = 2;
+			endfor
+		}
+
+	endfor
+
+	// add all nodes to the list
+	forall_nodes(graph, node) 
+
+		if (nodeLabelChanged[node]) {
+			toDoNodes.push_back(node);
+		}
+
+	endfor
+
+
+	return toDoNodes.size();
+}
+
 
 // returns the new number of toDoNodes
 NodeID labelPropagateIteration(graph_access& graph, std::vector<NodeID>& toDoNodes, std::vector<PartitionID>& labels, const std::vector<float>& edgeProbs, PartitionID maxClusterSize, std::vector<NodeID>& labelNodeCounts, std::vector<float>& currentValues) {
+
+	
+
 
 	std::vector<bool> nodeLabelChanged(graph.number_of_nodes(), false);
 
 	// for every node find the best neighbor
 	for (auto currentNode : toDoNodes) {
+
 
 		std::map<PartitionID, float> gains;
 		forall_out_edges(graph, e, currentNode)
@@ -38,7 +125,7 @@ NodeID labelPropagateIteration(graph_access& graph, std::vector<NodeID>& toDoNod
 		//bool canChangeLabel = maxClusterSize == 0 || labelNodeCounts[maxPair.first] < maxClusterSize - 1;
 		
 		// only allow if the gain is positive
-		if (maxPair.second > currentValues[currentNode]) {
+		if (maxPair.second + 5 > currentValues[currentNode]) {
 
 			nodeLabelChanged[currentNode] = labels[currentNode] != maxPair.first;
 
@@ -99,9 +186,7 @@ std::vector<PartitionID> labelPropagate(graph_access& graph, const std::vector<f
 	// number of nodes per label/cluster
 	std::vector<NodeID> labelNodeCounts(graph.number_of_nodes(), 0);
 
-	if (randomOrder) {
-		std::random_shuffle(toDoNodes.begin(), toDoNodes.end());
-	}
+	
 
 
 	// initialize the labels with the nodeIDs
@@ -115,13 +200,19 @@ std::vector<PartitionID> labelPropagate(graph_access& graph, const std::vector<f
 
 	for (int i = 0; i < iterations; i++) {
 
+		if (randomOrder) {
+		std::random_shuffle(toDoNodes.begin(), toDoNodes.end());
+		}
+
 		
-		if (!labelPropagateIteration(graph, toDoNodes, labels, edgeProbs, maxClusterSize, labelNodeCounts, nodeValues)) {
+		if (!labelPropagateIterationGreedy(graph, toDoNodes, labels, edgeProbs, labelNodeCounts)) {
 			std::cout << "Finished Label Propagation in Iteration " << i << std::endl; 
 			break;
 		}
 
-		std::cout << "changed " << toDoNodes.size() << " labels" << std::endl;
+
+
+		std::cout << "next iteration with " << toDoNodes.size() << " nodes to propagate over" << std::endl;
 	}
 
 

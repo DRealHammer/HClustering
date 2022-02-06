@@ -6,6 +6,7 @@
 #include <sstream>
 #include <stdio.h>
 #include <string.h>
+#include <algorithm>
 
 
 // custom functions and definitions
@@ -13,6 +14,7 @@
 #include <ml_clustering/inOut.h>
 #include <ml_clustering/labelPropagation.h>
 #include <ml_clustering/graphMetrics.h>
+#include <ml_clustering/unionFind.h>
 
 
 	
@@ -61,7 +63,7 @@ std::vector<float> getEdgeProbs(std::string graphFile, std::string boosterFilena
 		if (out_result[i] < 0) {
 			out_result[i] = 0;
 		}
-		out_result[i] += 0.0000001;
+		//out_result[i] += 0.0000001;
 	}
 
 	
@@ -72,6 +74,8 @@ std::vector<float> getEdgeProbs(std::string graphFile, std::string boosterFilena
 	graph_io graphIO;
 	graph_access graph;
 	graphIO.readGraphWeighted(graph, graphFile);
+
+	
 
 
 
@@ -99,9 +103,6 @@ std::vector<float> getEdgeProbs(std::string graphFile, std::string boosterFilena
 		endfor
 	endfor
 
-	for (auto& p : probs) {
-		//p = 1;
-	}
 
 	return probs;
 }
@@ -145,7 +146,7 @@ void printPrediction(std::string graphFile, std::string dataFilename) {
 	}
 }
 
-void performLabelPropagation(std::string graphFile, std::string dataFilename, float threshold = 0.5, bool compare = false) {
+void performLabelPropagation(std::string graphFile, std::string dataFilename, std::string boosterFilename, float threshold = 0.5, bool compare = false) {
 
 
 	// loading of the data and model
@@ -153,9 +154,9 @@ void performLabelPropagation(std::string graphFile, std::string dataFilename, fl
 
 	std::cout << "graph file: " << graphFile << std::endl;
 	std::cout << "data file: " << dataFilename << std::endl;
-	std::string boosterFilename = "booster.json";
+	std::cout << "booster file: " << boosterFilename << std::endl;
 
-	if (!std::ifstream(dataFilename).good()) {
+	if (!std::ifstream(dataFilename).is_open()) {
 		std::cout << "Error: no data file found, extract your features beforehand" << std::endl;
 		return;
 	}
@@ -166,13 +167,6 @@ void performLabelPropagation(std::string graphFile, std::string dataFilename, fl
 
 	auto probs = getEdgeProbs(graphFile, boosterFilename, dmat);
 
-	std::random_device rd;
-	std::mt19937 e2(rd());
-	std::uniform_real_distribution<> val(0, 1);
-
-	for (auto& p : probs) {
-		p = 1;
-	}
 
 	
 	graph_io graphIO;
@@ -255,6 +249,100 @@ void performLabelPropagation(std::string graphFile, std::string dataFilename, fl
 	endfor
 }
 
+struct FullEdge {
+	EdgeID id;
+	NodeID start;
+	NodeID end;
+	float weight;
+};
+
+void performGreedyClustering(std::string graphFile, std::string dataFilename, std::string boosterFilename, float threshold = 0.5, bool compare = false) {
+
+
+	// loading of the data and model
+
+
+	std::cout << "graph file: " << graphFile << std::endl;
+	std::cout << "data file: " << dataFilename << std::endl;
+	std::cout << "booster file: " << boosterFilename << std::endl;
+
+	if (!std::ifstream(dataFilename).is_open()) {
+		std::cout << "Error: no data file found, extract your features beforehand" << std::endl;
+		return;
+	}
+
+
+	DMatrixHandle dmat;
+	XGDMatrixCreateFromFile(dataFilename.c_str(), 0, &dmat);
+
+	auto probs = getEdgeProbs(graphFile, boosterFilename, dmat);
+
+	
+	graph_io graphIO;
+	graph_access graph;
+	graphIO.readGraphWeighted(graph, graphFile);
+
+	forall_nodes(graph, start)
+		forall_out_edges(graph, e, start)
+			NodeID target = graph.getEdgeTarget(e);
+			std::cout << start + 1 << " -> " << target + 1 << ": " << probs[e] << std::endl; 
+		endfor
+	endfor
+
+	std::vector<FullEdge> edges;
+	
+	forall_nodes(graph, start)
+		forall_out_edges(graph, e, start)
+			NodeID target = graph.getEdgeTarget(e);
+
+			// skip big -> small edges
+			if (start > target) {
+				continue;
+			}
+
+			edges.push_back({e, start, target, probs[e]});
+		endfor
+	endfor
+
+	struct {
+        bool operator()(FullEdge a, FullEdge b) const { return a.weight > b.weight; }
+    } customCompare;
+	std::sort(edges.begin(), edges.end(), customCompare);
+	
+	float currentThreshold;
+	int currentEdge = 0;
+
+	UnionFind clustering(graph.number_of_nodes());
+
+	std::string outfilePrefix = "clusterings/threshold-clustering-";
+	while (currentEdge != edges.size()) {
+
+		// set the current threshold with the current edge
+		currentThreshold = edges[currentEdge].weight;
+		std::cout << "current threshold: " << currentThreshold << std::endl; 
+
+		// go through the edges until we find a smaller threshold
+		while(edges[currentEdge].weight >= currentThreshold && currentEdge != edges.size()) {
+
+			// match current edge
+			clustering.unite(edges[currentEdge].start, edges[currentEdge].end);
+
+			// go to next edge
+			currentEdge++;
+		}
+
+		// write the current thresholds clustering to a file
+		std::ofstream outfile(outfilePrefix + std::to_string(currentThreshold));
+
+		forall_nodes(graph, node)
+			outfile << clustering.find_set(node) << std::endl;
+		endfor
+		outfile.close();
+	}
+
+
+}
+
 
 
 int main(int argc, char** argv) {
@@ -283,7 +371,7 @@ int main(int argc, char** argv) {
 	std::cout << "performing label propagation" << std::endl;
 
 	//printPrediction(graph_filename, partition_config.dataFilename);
-	performLabelPropagation(graph_filename, partition_config.dataFilename, 0.142724, true);
+	performGreedyClustering(graph_filename, partition_config.dataFilename, partition_config.modelFilename, 0.5, true);
 
 	return 0;
 }

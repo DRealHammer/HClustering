@@ -84,7 +84,7 @@ void printFeatureImportance(BoosterHandle booster) {
 	}
 }
 
-void train(std::string dataFilename, std::string boosterFilename) {
+void train(std::string trainFilename, std::string testFilename, std::string boosterFilename, int iters) {
 
 	if (boosterFilename.size() == 0) {
 		boosterFilename = "booster.json";
@@ -93,30 +93,40 @@ void train(std::string dataFilename, std::string boosterFilename) {
 	std::cout << "reading file" << std::endl;
 	DMatrixHandle dtrain;
 	
-	std::cout << "data filename: " << dataFilename << std::endl;
+	std::cout << "train filename: " << trainFilename << std::endl;
+	std::cout << "test filename: " <<  testFilename << std::endl;
 
 
-	if(XGDMatrixCreateFromFile("data/all.data", 1, &dtrain)) {
-		std::cout << "could not read the data file" << std::endl;
+	if(XGDMatrixCreateFromFile(trainFilename.c_str(), 1, &dtrain)) {
+		std::cout << "could not read the training file" << std::endl;
 		return;
 	}
 
 	DMatrixHandle dtest;
-	if(XGDMatrixCreateFromFile("data/all.data", 1, &dtest)) {
-		std::cout << "could not read the data file" << std::endl;
+	bool testGiven = testFilename.size() != 0;
+	if (testGiven) {
+		if(XGDMatrixCreateFromFile(testFilename.c_str(), 1, &dtest)) {
+		std::cout << "could not read the test file" << std::endl;
 		return;
+		}
 	}
+	
 
 
-
-	std::cout << "finished reading the file"  << std::endl;
+	std::cout << "finished reading the files"  << std::endl;
 
 	BoosterHandle booster;
-	DMatrixHandle dmats[] = {dtrain, dtest};
-	XGBoosterCreate(dmats, 2, &booster);
+	std::vector<DMatrixHandle> dmats;
+	dmats.push_back(dtrain);
+
+	if (testGiven) {
+		dmats.push_back(dtest);
+	}
+
+	XGBoosterCreate(dmats.data(), dmats.size(), &booster);
 	//XGBoosterSetParam(booster, "learning_rate", "0.01");
-	//XGBoosterSetParam(booster, "n_estimators", "1000");
-	//XGBoosterSetParam(booster, "max_depth", "6");
+	//XGBoosterSetParam(booster, "n_estimators", "50");
+	//XGBoosterSetParam(booster, "max_depth", "5");
 	//XGBoosterSetParam(booster, "subsample", "0.8");
 	//XGBoosterSetParam(booster, "colsample_bytree", "1");
 	//XGBoosterSetParam(booster, "gamma", "1");
@@ -125,18 +135,19 @@ void train(std::string dataFilename, std::string boosterFilename) {
 	// test if booster exists
 	if (std::ifstream(boosterFilename).is_open()) {
 		XGBoosterLoadModel(booster, boosterFilename.c_str());
+	} else {
+		std::cout << "booster file not found, creating new model" << std::endl;
 	}
 
 
-	
 	std::cout << "start training" << std::endl;
-	std::cout << "loading " << dataFilename << std::endl;
+	std::cout << "loading " << trainFilename << std::endl;
 
-	const char* name = dataFilename.c_str();
+	const char* name = trainFilename.c_str();
 	const char* names[] = {"training", "testing"};
 	const char* eval_result = NULL;
 
-	for (int iter = 0; iter < 100; iter++) {
+	for (int iter = 0; iter < iters; iter++) {
 		if(XGBoosterUpdateOneIter(booster, iter, dtrain)) {
 			std::cout << XGBGetLastError() << std::endl;
 			std::cout << "could not train" << std::endl;
@@ -146,7 +157,7 @@ void train(std::string dataFilename, std::string boosterFilename) {
 		//std::cout << "saving model" << std::endl;
 		XGBoosterSaveModel(booster, boosterFilename.c_str());
 
-		if(XGBoosterEvalOneIter(booster, iter, dmats, names, 1, &eval_result)) {
+		if(XGBoosterEvalOneIter(booster, iter, dmats.data(), names, dmats.size(), &eval_result)) {
 			std::cerr << "[" << iter << "] Error!" << std::endl;
 			return;
 		}
@@ -158,9 +169,13 @@ void train(std::string dataFilename, std::string boosterFilename) {
 	evaluateBooster(booster, dtrain);
 	printFeatureImportance(booster);
 
-	std::cout << "freeing matrix of " << dataFilename << std::endl;
+	std::cout << "freeing matrix of " << trainFilename << std::endl;
 	XGDMatrixFree(dtrain);
-	XGDMatrixFree(dtest);
+
+	if (testGiven) {
+		std::cout << "freeing matrix of " << testFilename << std::endl;
+		XGDMatrixFree(dtest);
+	}
 
 
 }
@@ -180,12 +195,13 @@ int main(int argc, char** argv) {
 					is_graph_weighted, 
 					suppress_output, recursive); 
 
+
 	if(ret_code) {
 			return 0;
 	}
 
 	
-	train(dataFilename, partition_config.modelFilename);
+	train(dataFilename, partition_config.testFilename, partition_config.modelFilename, partition_config.iterations);
 
 	
 

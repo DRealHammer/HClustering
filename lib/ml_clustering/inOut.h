@@ -6,6 +6,7 @@
 #include <cstdio>
 #include <PGD/graphlet_core.h>
 #include <ml_clustering/graphFormats.h>
+#include <ml_clustering/graphMetrics.h>
 
 
 std::map<NodeID, std::vector<CommID>> readCommunityFile(std::string fileName);
