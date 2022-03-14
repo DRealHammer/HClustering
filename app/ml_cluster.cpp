@@ -256,7 +256,7 @@ struct FullEdge {
 	float weight;
 };
 
-void performGreedyClustering(std::string graphFile, std::string dataFilename, std::string boosterFilename, float threshold = 0.5, bool compare = false) {
+void performGreedyClustering(std::string graphFile, std::string dataFilename, std::string boosterFilename) {
 
 
 	// loading of the data and model
@@ -339,8 +339,6 @@ void performGreedyClustering(std::string graphFile, std::string dataFilename, st
 		endfor
 		outfile.close();
 	}
-
-
 }
 
 
@@ -371,7 +369,7 @@ int main(int argc, char** argv) {
 	std::cout << "performing label propagation" << std::endl;
 
 	//printPrediction(graph_filename, partition_config.dataFilename);
-	performGreedyClustering(graph_filename, partition_config.dataFilename, partition_config.modelFilename, 0.5, true);
+	performGreedyClustering(graph_filename, partition_config.dataFilename, partition_config.modelFilename);
 
 	return 0;
 }

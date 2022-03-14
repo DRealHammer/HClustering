@@ -336,18 +336,18 @@ install(TARGETS ml_train DESTINATION bin)
 
 
 # ml label propagation executable
-add_executable(ml_label_propagation app/ml_label_propagation.cpp $<TARGET_OBJECTS:libmlclustering>)
-target_compile_definitions(ml_label_propagation PRIVATE "-DMODE_ML_LABEL_PROPAGATION")
-target_include_directories(ml_label_propagation PUBLIC ${MPI_CXX_INCLUDE_PATH})
-target_link_libraries(ml_label_propagation ${MPI_CXX_LIBRARIES} ${OpenMP_CXX_LIBRARIES})
+add_executable(ml_cluster app/ml_cluster.cpp $<TARGET_OBJECTS:libmlclustering>)
+target_compile_definitions(ml_cluster PRIVATE "-DMODE_ML_CLUSTER")
+target_include_directories(ml_cluster PUBLIC ${MPI_CXX_INCLUDE_PATH})
+target_link_libraries(ml_cluster ${MPI_CXX_LIBRARIES} ${OpenMP_CXX_LIBRARIES})
 
 # xgboost library for ML
-target_link_libraries(ml_label_propagation xgboost)
+target_link_libraries(ml_cluster xgboost)
 
 # PGD for Graphlets
-target_link_libraries(ml_label_propagation PGD)
+target_link_libraries(ml_cluster PGD)
 
-install(TARGETS ml_label_propagation DESTINATION bin)
+install(TARGETS ml_cluster DESTINATION bin)
 
 
 

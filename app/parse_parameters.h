@@ -143,7 +143,7 @@ int parse_parameters(int argn, char **argv,
         struct arg_int *depth                             = arg_int0(NULL, "depth", NULL, "depth of the training");
 #endif
 
-#ifdef MODE_ML_LABEL_PROPAGATION
+#ifdef MODE_ML_CLUSTER
         struct arg_str *modelFilename                     = arg_strn(NULL, "model", "modelFilename", 0, 1, "The path to the model used for predicting");
         struct arg_str *dataFilename                      = arg_strn(NULL, "data", "dataFilename", 1, 1, "The path to the features used for predicting");
 #endif
@@ -301,7 +301,7 @@ int parse_parameters(int argn, char **argv,
                 modelFilename,
                 testFilename,
                 iterations,
-#elif defined MODE_ML_LABEL_PROPAGATION
+#elif defined MODE_ML_CLUSTER
                 modelFilename,
                 dataFilename,
 #elif defined MODE_MLCLUSTERING
@@ -454,7 +454,7 @@ int parse_parameters(int argn, char **argv,
         partition_config.iterations = iterations->ival[0];
 #endif
 
-#ifdef MODE_ML_LABEL_PROPAGATION
+#ifdef MODE_ML_CLUSTER
         partition_config.modelFilename = modelFilename->sval[0];
         partition_config.dataFilename = dataFilename->sval[0];
 #endif

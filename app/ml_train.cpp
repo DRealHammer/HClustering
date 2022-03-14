@@ -112,7 +112,6 @@ void train(std::string trainFilename, std::string testFilename, std::string boos
 	}
 	
 
-
 	std::cout << "finished reading the files"  << std::endl;
 
 	BoosterHandle booster;

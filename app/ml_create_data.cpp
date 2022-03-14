@@ -14,11 +14,6 @@
 
 #include "parse_parameters.h"
 
-/*
-
-./build/ml_create_data <graphFilename> [--output <outputFilename>] [--communities <communityFilename>] [--graphlets <graphletFilename>] [--features <features>] [--featureFile <featureFile>]
-
-*/
 
 int main(int argc, char** argv) {
 
@@ -39,8 +34,6 @@ int main(int argc, char** argv) {
 			return 0;
 	}
 
-	//--createData <graphFilename> <outputFilename> [<communityFilename>] [<graphletFilename>]
-
 	// find a outputfilename for the file if not specified
 	std::string outputFilename = partition_config.filename_output.empty() ? graph_filename + "-data" : partition_config.filename_output;
 	
@@ -55,9 +48,6 @@ int main(int argc, char** argv) {
 
 	writeGraphFeatureFile(graph_filename, outputFilename, communityFilename, graphletFilename, featureFilename);
 
-	
-	
-	
 
 	return 0;
 }
