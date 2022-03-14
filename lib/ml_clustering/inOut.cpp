@@ -75,7 +75,7 @@ void writeGraphFeatureFile(std::string graphFilename, std::string outputFilename
 
 	
 
-	std::cout << "start writing" << std::endl;
+	std::cout << "start writing edge features" << std::endl;
 	writeFeaturesInFile(graph, outputFilename, comms, selectedFeaturesSet, graphletFilename);
 	std::cout << "cmtyfiel: " << communityFilename << std::endl;
 }

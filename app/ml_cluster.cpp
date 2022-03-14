@@ -285,7 +285,7 @@ void performGreedyClustering(std::string graphFile, std::string dataFilename, st
 	forall_nodes(graph, start)
 		forall_out_edges(graph, e, start)
 			NodeID target = graph.getEdgeTarget(e);
-			std::cout << start + 1 << " -> " << target + 1 << ": " << probs[e] << std::endl; 
+			//std::cout << start + 1 << " -> " << target + 1 << ": " << probs[e] << std::endl; 
 		endfor
 	endfor
 
@@ -365,8 +365,8 @@ int main(int argc, char** argv) {
 	//std::cout << "edge weight predictions" << std::endl;
 	//printPrediction(graph_filename, partition_config.dataFilename);
 
-	std::cout << "------------------------" << std::endl;
-	std::cout << "performing label propagation" << std::endl;
+	//std::cout << "------------------------" << std::endl;
+	//std::cout << "performing label propagation" << std::endl;
 
 	//printPrediction(graph_filename, partition_config.dataFilename);
 	performGreedyClustering(graph_filename, partition_config.dataFilename, partition_config.modelFilename);

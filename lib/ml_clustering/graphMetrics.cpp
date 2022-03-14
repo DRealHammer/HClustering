@@ -77,6 +77,7 @@ float conductance(graph_access& graph, std::vector<PartitionID> clustering) {
 
     }
 
+    /*
     std::cout << "all conductances" << std::endl;
     for (int i = 0; i < conductances.size(); i++) {
         
@@ -87,6 +88,7 @@ float conductance(graph_access& graph, std::vector<PartitionID> clustering) {
         }
         std::cout << conductances[i] << std::endl;
     }
+    */
 
     return *std::max_element(conductances.begin(), conductances.end());
 }
