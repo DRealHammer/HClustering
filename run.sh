@@ -20,8 +20,8 @@ create_data() {
     #./build/ml_create_data data/3-connected.metis --features features --communities data/3-connected.cluster
 
     #./build/ml_create_data data/333SP.metis --features features --communities data/333SP.cluster --graphlet data/333SP.metis.graphlet
-    ./build/ml_create_data data/luxembourg.metis --features features --communities data/luxembourg.cluster --graphlet data/luxembourg.metis.graphlet
-    ./build/ml_create_data data/rgg_17.metis --features features --communities data/rgg_17.cluster --graphlet rgg_17.metis.graphlet
+    ./build/ml_create_data data/luxembourg.metis --features features --communities data/luxembourg.cluster
+    # ./build/ml_create_data data/rgg_17.metis --features features --communities data/rgg_17.cluster --graphlet rgg_17.metis.graphlet
 
 }
 
@@ -32,10 +32,10 @@ experiment() {
     #rm booster.json
     #rm 3-cluster.out
 
-    #./build/ml_train data/luxembourg.metis-data --model booster.json --iterations 100
+    #./build/ml_train data/luxembourg.metis-data --model booster.json --iterations 10
 
     #./build/ml_train data/train.data --test data/test.data --model booster.json --iterations 5
-    #./build/ml_train data/train.data --test data/test.data --model booster-33SP-luxembourg.json --iterations 100 >> 333SP-luxembourg-split.out
+    #./build/ml_train data/train.data --test data/test.data --model booster.json --iterations 100
     #./build/ml_train data/train.data --test data/test.data --model booster-luxembourg.json --iterations 100 >> luxembourg-split-degrees-not-normalized.out
     #./build/ml_train data/train.data --test data/test.data --model booster-33SP.json --iterations 100 >> 333SP-split.out
     #./build/ml_train data/train.data --test data/test.data --model booster-rgg_17.json --iterations 100 >> rgg_17-split.out
@@ -59,40 +59,43 @@ experiment() {
     #./build/ml_train data/com-lj.metis-data --model booster.json
 
 
-    echo "-------------------------- Testing ----------------------------"
+    #echo "-------------------------- Testing ----------------------------"
 
 
 
-    echo "-------------------------- Using the predicted weights ----------------------------"
+    #echo "-------------------------- Using the predicted weights ----------------------------"
     # perform testwise label propagation
-    #/build/ml_label_propagation data/com-amazon.metis --data data/com-amazon.metis-data
-    #./build/ml_label_propagation data/com-dblp.metis --data data/com-dblp.metis-data
-    #./build/ml_label_propagation data/com-youtube.metis --data data/com-youtube.metis-data
-    #./build/ml_label_propagation data/email-Eu-core.metis --data data/email-Eu-core.metis-data
-    #./build/ml_label_propagation data/com-lj.metis-data --data data/com-lj.metis-data
-    #./build/ml_label_propagation data/test.metis --data data/test.metis-data
+    #/build/ml_cluster data/com-amazon.metis --data data/com-amazon.metis-data
+    #./build/ml_cluster data/com-dblp.metis --data data/com-dblp.metis-data
+    #./build/ml_cluster data/com-youtube.metis --data data/com-youtube.metis-data
+    #./build/ml_cluster data/email-Eu-core.metis --data data/email-Eu-core.metis-data
+    #./build/ml_cluster data/com-lj.metis-data --data data/com-lj.metis-data
+    #./build/ml_cluster data/test.metis --data data/test.metis-data
 
-    #./build/ml_label_propagation data/luxembourg.metis --data data/luxembourg.metis-data --model booster.json >> output-luxembourg.txt
+    #./build/ml_cluster data/luxembourg.metis --data data/luxembourg.metis-data --model booster.json >> output-luxembourg.txt
 
-    #./build/ml_label_propagation data/3-cluster.metis --data data/3-cluster.metis-data >> output-3-cluster-not-normalized-luxembourg.txt --model booster-luxembourg.json
-    #./build/ml_label_propagation data/3-cluster.metis --data data/3-cluster.metis-data >> output-3-cluster-not-normalized-333SP.txt --model booster-333SP.json
-    #./build/ml_label_propagation data/3-cluster.metis --data data/3-cluster.metis-data --model booster-rgg_17.json >> output-3-cluster-rgg_17.txt 
-    #./build/ml_label_propagation data/3-cluster.metis --data data/3-cluster.metis-data --model booster.json
+    #./build/ml_cluster data/3-cluster.metis --data data/3-cluster.metis-data >> output-3-cluster-not-normalized-luxembourg.txt --model booster-luxembourg.json
+    #./build/ml_cluster data/3-cluster.metis --data data/3-cluster.metis-data >> output-3-cluster-not-normalized-333SP.txt --model booster-333SP.json
+    #./build/ml_cluster data/3-cluster.metis --data data/3-cluster.metis-data --model booster-rgg_17.json >> output-3-cluster-rgg_17.txt 
+    #./build/ml_cluster data/3-cluster.metis --data data/3-cluster.metis-data --model booster.json
 
 
-    #./build/ml_label_propagation data/4-cluster.metis --data data/4-cluster.metis-data >> output-4-cluster.txt
+    #./build/ml_cluster data/4-cluster.metis --data data/4-cluster.metis-data >> output-4-cluster.txt
 
-    #./build/ml_label_propagation data/3-cluster.metis --data data/3-cluster.metis-data --model booster-rgg_17-luxembourg-333SP.json >> output-3-cluster-all.txt
+    #./build/ml_cluster data/3-cluster.metis --data data/3-cluster.metis-data --model booster-rgg_17-luxembourg-333SP.json >> output-3-cluster-all.txt
 
-    #./build/ml_label_propagation data/3-connected.metis --data data/3-connected.metis-data --model booster.json
-    #./build/ml_label_propagation data/cora.metis --data data/cora.metis-data --model booster.json >> output-cora.txt
-    #./build/ml_label_propagation data/citeseer.metis --data data/citeseer.metis-data >> output-citeseer-random.txt
-    #./build/ml_label_propagation data/pubmed.metis --data data/pubmed.metis-data >> output-pubmed-random.txt
-    #./build/ml_label_propagation data/ppi.metis --data data/ppi.metis-data >> output-ppi-random.txt
-    #./build/ml_label_propagation data/reddit.metis --data data/reddit.metis-data >> output-reddit-random.txt
+    #./build/ml_cluster data/3-connected.metis --data data/3-connected.metis-data --model booster.json
+    #./build/ml_cluster data/cora.metis --data data/cora.metis-data --model booster.json >> output-cora.txt
+    #./build/ml_cluster data/citeseer.metis --data data/citeseer.metis-data >> output-citeseer-random.txt
+    #./build/ml_cluster data/pubmed.metis --data data/pubmed.metis-data >> output-pubmed-random.txt
+    #./build/ml_cluster data/ppi.metis --data data/ppi.metis-data >> output-ppi-random.txt
+    #./build/ml_cluster data/reddit.metis --data data/reddit.metis-data >> output-reddit-random.txt
 
-    #./build/ml_label_propagation data/333SP.metis --data data/333SP.metis-data --model booster.json >> output-333SP-normalized.txt   
-    ./build/ml_label_propagation data/rgg_17.metis --data data/rgg_17.metis-data --model booster.json >> output-rgg_17-normalized.txt   
+    #./build/ml_cluster data/333SP.metis --data data/333SP.metis-data --model booster.json >> output-333SP-normalized.txt   
+    #./build/ml_cluster data/rgg_17.metis --data data/rgg_17.metis-data --model booster.json >> output-rgg_17-normalized.txt   
+
+    #./build/ml_create_data data/3-cluster.metis --features features --communities data/3-cluster.cluster
+    ./build/ml_cluster data/3-cluster.metis --data data/3-cluster.metis-data --model booster.json
 }
 
 
